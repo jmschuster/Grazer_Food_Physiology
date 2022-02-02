@@ -67,6 +67,7 @@ D3Channel1 %>%  filter(Time>=0 & Time<807) %>%
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 ``` {r Plotting}
+setwd("/Users/jmschuster/Documents/GitHub/Grazer_Food_Physiology/")
 CageExp<-read.csv("BMSC_CageExp_Data.csv")
 GrazerWeights<-read.csv("Grazer_Weights.csv")
 CTmax<-read.csv('CTmax_FoodExp.csv')
@@ -412,6 +413,9 @@ ggsave(filename="HeatResistance_Treatment",height=5, width=7, units="in", plot=g
 # Kaplan-Meier survival function - Grazer heat resistance - differences across species:
 km_heat_Species<-survfit(Surv(LOE_sec) ~ Species_Name, data=CTmax)
 survdiff(Surv(LOE_sec) ~ Species_Name, data = CTmax)
+
+# Including only starved individuals
+km_heat_SpeciesSub<-survfit(Surv(LOE_sec) ~ Species_Name, data=subset(CTmax, Treatment_Name=='No food'))
 
 # Build plot for survival across species (treatments lumped together since no difference)
 plot_heat_Species<-autoplot(km_heat_Species)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12), plot.margin= unit(c(0.1,1,0.2,0.2), "cm"),legend.text=element_text(face='italic'))+xlab("Percent Time (% seconds)")+ylab('Population Survival')+ scale_fill_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+ scale_colour_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+ labs(title="Survival time across species", tag="A") + guides(fill=guide_legend(nrow=2,byrow=TRUE))+ geom_segment(aes(y=0.5,yend=0.5,x=-Inf,xend=151),linetype="dashed",size=1)+geom_segment(aes(x=148,xend=148,y=-Inf,yend=0.5),colour='brown2',linetype="dashed",size=1)+geom_segment(aes(x=151,xend=151,y=-Inf,yend=0.5),colour='mediumpurple3',linetype="dashed",size=1)+geom_segment(aes(x=88,xend=88,y=-Inf,yend=0.5),colour='lightsteelblue',linetype="dashed",size=1)+geom_segment(aes(x=57.5,xend=57.5,y=-Inf,yend=0.5),colour='orange2',linetype="dashed",size=1)

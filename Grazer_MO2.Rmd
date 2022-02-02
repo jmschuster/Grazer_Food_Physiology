@@ -1,0 +1,730 @@
+---
+title: "Grazer physiology food experiment"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r Data processing, eval = FALSE}
+library(respR) # load the library
+setwd("/Users/jmschuster/Desktop/PhD/Bamfield 2021/Data/Grazer_Food_Exp/Start_Day1/") # set wd
+
+D1Channel10<-read.csv("Channel10.csv") # background resp data
+D1Channel3<-read.csv("Channel3.csv") # selected channel resp data
+
+D1Channel1 %>% filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%                 # With the data object,
+  inspect(3, 7) %>%                                     # inspect, then
+  calc_rate(from = 0, to = 33, by = "time") %>%          # calculate rate, then
+  print() %>%
+  adjust_rate(
+    calc_rate.bg(D1Channel10,time=3,oxygen=7)) %>%
+  print() %>%
+  convert_rate(o2.unit = "%", time.unit = "m",     
+               output.unit = "ml/h/g", volume = 0.57, mass = 0.07225,S=30.8, t=D1Channel1$Temperature) # convert units.
+
+# Calculate r squared values
+rate<-D1Channel1 %>% filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%      
+  inspect(3, 7) %>%                                   
+  calc_rate(from = 0, to = 33, by = "time")
+
+summary(rate)
+
+### Volumetric O2 consumption (disregarding organism weight)
+
+D1Channel1 %>%  filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%  
+  inspect(3, 7) %>%                              
+  calc_rate(from = 0, to = 33, by = "time") %>%      
+  print() %>%
+  adjust_rate(
+    calc_rate.bg(D1Channel10,time=3,oxygen=7)) %>%
+  print() %>%
+  convert_rate(o2.unit = "%", time.unit = "m",     
+               output.unit = "ml/h", volume = 0.57,S=30.8, t=D1Channel1$Temperature) # convert units.
+
+
+
+#### MESSY TIME STAMPS (DAY 3 START)
+D3Channel1 %>%  filter(Time>=0 & Time<807) %>%            
+  inspect(3, 8) %>%   
+  calc_rate(from = 0, to = 807, by = "time") %>% 
+  print() %>%
+  adjust_rate(
+    calc_rate.bg(D1Channel10,time=3,oxygen=7)) %>%
+  print() %>%
+  convert_rate(o2.unit = "%", time.unit = "s",     
+               output.unit = "ml/h", volume = 0.6,S=30.8, t=D3Channel1$Temperature) # convert units.
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+``` {r Plotting}
+CageExp<-read.csv("BMSC_CageExp_Data.csv")
+GrazerWeights<-read.csv("Grazer_Weights.csv")
+CTmax<-read.csv('CTmax_FoodExp.csv')
+
+########################################################
+##################### MAP FIGURE #######################
+########################################################
+library(ggplot2); library('sf'); library('rnaturalearth'); library('rnaturalearthdata')
+devtools::install_github("ropenscilabs/rnaturalearthdata")
+install.packages("rnaturalearthhires",
+                 repos = "http://packages.ropensci.org",
+                 type = "source")
+
+library('rnaturalearthhires'); library(rgeos); library(ggspatial); library(ggrepel)
+
+X=c('canada')
+world <- ne_states(country='canada',returnclass = 'sf')
+world_points<- st_centroid(world)
+world_points <- cbind(world, st_coordinates(st_centroid(world$geometry)))
+
+# Map of Vancouver Island
+VI_map<-ggplot(data = world) +
+  geom_sf() +
+  coord_sf(xlim = c(-129.00, -122.00), ylim = c(48.00, 52.00), expand = FALSE) +
+  annotation_scale(location = "bl", width_hint = 0.3,text_cex=1)+
+  annotate("text", x = -126.1, y = 50, label = "Vancouver\nIsland",size=4)+
+  annotate('text', x= -124, y = 51, label= 'Mainland\nCanada', size=4) +
+  annotate('text',x=-124.3, y = 49, label = 'Bamfield', size =3.5,colour="darkcyan")+
+  theme_bw(base_size=15)+theme(axis.text=element_blank(),axis.title=element_blank(),
+                   axis.ticks=element_blank())+ 
+  geom_segment(aes(x = -124.3, y = 48.9, xend = -125.1, yend = 48.8),colour='darkcyan',
+               size=1,arrow = arrow(length = unit(0.3, "cm")))+
+  annotation_north_arrow(location = "bl", which_north = "true",
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.3, "in"),
+                         style = north_arrow_fancy_orienteering)
+
+ggsave(filename="Map_VancouverIsland",height=5, width=6, units="in", plot=VI_map, device="png")
+
+# Location of BMSC in Bamfield
+Lat<-c(48.833778)
+Long<-c(-125.136886)
+Site<-c("Bamfield - BMSC")
+Locs<-tibble(Lat,Long,Site)
+
+
+
+
+
+########################################################
+############ DIFFERENCES IN METABOLIC RATES ############
+########################################################
+
+# Tidying data
+CageExp$Week<-as.factor(CageExp$Week)
+CageExp$Time_Caging <- ordered(CageExp$Time_Caging, levels = c("Start", "End")) # Reorder timing factor
+GrazerWeights$Time_WetWeight <- ordered(GrazerWeights$Time_WetWeight, levels = c('Pre Caging',"Start", "End"))
+CageExp$Treatment<-as.factor(CageExp$Treatment)
+CageExp$Species<-factor(CageExp$Species,levels=c("Mesocentrotus franciscanus","Strongylocentrotus purpuratus","Pomaulax gibberosus", "Tegula pulligo")) # specify order of species name factor
+
+
+CageExp<-CageExp %>% dplyr::mutate(Treatment_Name = case_when(
+  Treatment == 'Macrocystis' ~ 'High quality food',
+  Treatment == 'Saccharina' ~ 'Low quality food',
+  Treatment == 'Unfed' ~ 'No food'))
+
+# Rescale with outliers removed
+filter_lims <- function(x){
+  l <- boxplot.stats(x)$stats[1]
+  u <- boxplot.stats(x)$stats[5]
+
+  for (i in 1:length(x)){
+    x[i] <- ifelse(x[i]>l & x[i]<u, x[i], NA)
+  }
+  return(x)
+}
+
+
+library(dplyr)
+library(ggplot2)
+
+# Wet Weight specific MR (scale adjusted w/o outliers)
+plot1<-CageExp %>% filter(rsqrt>=0.9) %>%
+  group_by(Species, Treatment_Name) %>%  # do the same calcs for each box
+  dplyr::mutate(value2 = filter_lims(WW_MR_ml.h.g)) %>%  # new variable (value2) so as not to displace first one)
+  ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
+  geom_boxplot(na.rm = TRUE, coef = 5) + 
+  facet_wrap( ~ Species, scales="free") + 
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h / g)*'')) + ggtitle("Wet Mass")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment') +theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+
+# Absolute MO2
+plot2<-CageExpSub %>% filter(rsqrt>=0.9) %>%
+  group_by(Species, Treatment) %>%  # do the same calcs for each box
+  dplyr::mutate(value2 = filter_lims(MO2_ml.h)) %>%  # new variable (value2) so as not to displace first one)
+  ggplot(aes(x=Week, y=value2, fill = Treatment)) + 
+  geom_boxplot(na.rm = TRUE, coef = 5) + 
+  facet_wrap( ~ Species, scales="free") + 
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*'')) + ggtitle("Absolute")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'))+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+
+ggsave(filename="Absolute_MR",height=6, width=7, units="in", plot=plot2, device="png")
+ggsave(filename="WetMass_MR",height=6, width=7, units="in", plot=plot1, device="png")
+
+# Mass-independent MO2
+# Relationship between mass & MO2
+library(nlme); library(mgcv); library(rstatix); library(ggpubr); library(grid); library(gridExtra)
+ggplot(data=CageExp,aes(x=WetWeight_g,y=MO2_ml.h))+geom_point()+theme_bw()+facet_wrap(~Species,scale='free')+geom_smooth(method = "lm", se=FALSE, color="red", formula = y ~ x)
+
+# Model relationship of mass & MO2
+Mres1<-lme(MO2_ml.h~WetWeight_g,random=~1|Species,data=CageExp,na.action=na.omit) # random intercept model
+Mres1a<-lme(MO2_ml.h~WetWeight_g,random=~1+WetWeight_g|Species,data=CageExp,na.action=na.omit) # random slope + intercept
+Mres2<-gamm(MO2_ml.h~s(WetWeight_g),random=list(Species=~1),data=CageExp,na.action=na.omit)
+res.VO2.WW=as.data.frame(residuals(Mres1));colnames(res.VO2.WW)=c("res.VO2.WW")
+res2.VO2.WW<-as.data.frame(residuals(Mres2$gam,type='response'));colnames(res2.VO2.WW)=c('res2.VO2.WW') # response residuals (= observed - fitted values)
+CageExpSub<-CageExp[!is.na(CageExp$MO2_ml.h),] # remove rows with missing MO2 values
+CageExpSub=cbind(CageExpSub,res.VO2.WW,res1.VO2.WW,res2.VO2.WW) # bind residuals to df
+
+# Plot Mass-independent MO2
+# Function to round so that y-axis labels can be shown with 2 decimal points
+formatter <- function(...){
+  function(x) format(round(x, 2), ...)
+}
+
+# Stats for adding significance symbols
+#stat.test <- CageExpSub %>% filter(Quality!='Bad') %>%
+  group_by(Week, Species) %>%
+  dplyr::mutate(value2 = filter_lims(res2.VO2.WW)) %>%
+  t_test(value2 ~ Treatment_Name) 
+#stat.test
+
+### PLOT USING FACETS
+plot3<-CageExpSub %>% filter(rsqrt>=0.90) %>%
+  group_by(Species, Treatment_Name) %>%  # do the same calcs for each box
+  dplyr::mutate(value2 = filter_lims(res2.VO2.WW)) %>%  # new variable (value2) so as not to displace first one)
+  ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
+  geom_boxplot(na.rm = TRUE, coef = 5) +  # remove NAs, and set the whisker length to all included points
+  facet_wrap( ~ Species, scales="free") + 
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2))+theme_bw(base_size=15)+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+
+ggsave(filename="MassIndep_MR",height=6, width=7, units="in", plot=plot3, device="png")
+
+#### BUILDING SEPARATE PLOTS FOR EACH SPECIES
+stat.test <- CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus') %>%
+  group_by(Week) %>%
+  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
+stat.test
+
+stat.test <- stat.test %>%
+  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
+
+plot3a<-CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus') %>%
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name)) + 
+  geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.9))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")
+
+plot3a<-plot3a+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
+    hide.ns = TRUE) 
+###
+stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
+  group_by(Week) %>%
+  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
+stat.test
+
+stat.test <- stat.test %>%
+  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
+
+stat.test$y.position.new<-stat.test$y.position+0.2 # adjust y-position of significance labels
+
+plot3b<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name)) + 
+  geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,1.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Strongylocentrotus purpuratus",tag="B")
+
+plot3b<-plot3b+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
+    hide.ns = TRUE,y.position='y.position.new') 
+
+###
+stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
+  group_by(Week) %>%
+  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
+stat.test
+
+stat.test <- stat.test %>%
+  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
+
+plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name)) + 
+  geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
+
+plot3c<-plot3c + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
+    hide.ns = TRUE) 
+###
+stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
+  group_by(Week) %>%
+  wilcox_test(res2.VO2.WW/N_Dusky ~ Treatment_Name) 
+stat.test
+
+stat.test <- stat.test %>%
+  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
+
+plot3d<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
+  ggplot(aes(x=Week, y=res2.VO2.WW/N_Dusky, colour = Treatment_Name)) + 
+  geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 3),limits=c(-0.05,0.05))+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(),axis.title.y=element_blank(), panel.grid.minor = element_blank(),legend.position=c(0.7,0.5), legend.direction = 'horizontal',legend.margin=margin(t=-10,l=150,b=-10),plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")
+
+plot3d<-plot3d + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
+    hide.ns = TRUE) 
+
+
+legend2 <- get_legend(plot3d) # extract legend object
+
+# SAVE FINAL PLOT
+ggsave(filename="MassIndep_MR_V2",height=9, width=9, units="in", plot=grid.arrange(plot3a, plot3b, plot3c, plot3d+theme(legend.position='none'),legend2, ncol = 2,nrow=3,  widths = c(2.2, 2), heights = c(2.6, 2.9,0.3)), device="png")
+
+########################################################
+############# DIFFERENCES IN ORGANISM MASS #############
+########################################################
+
+# Wet Mass
+plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Wet Mass")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+
+ggsave(filename="WetWeights",height=4, width=5, units="in", plot=plot4a, device="png")
+
+# Dry Mass
+plot4b<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=DryWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Dry Mass")+labs(y="Dry Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+
+ggsave(filename="DryWeights",height=4, width=5, units="in", plot=plot4b, device="png")
+
+# AFD Mass
+plot4c<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=AFDW_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species,scale='free_y')+ggtitle("AFDM")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+
+ggsave(filename="AFDW",height=4, width=5, units="in", plot=plot4c, device="png")
+
+
+########################################################
+############ DIFFERENCES IN HEAT RESISTENCE ############
+########################################################
+
+# Heat resistance initial plots
+CTmax$LOE_sec<-as.numeric(CTmax$LOE_sec)
+CTmax$Treatment<-as.factor(CTmax$Treatment)
+CTmax$Species_Name<-factor(CTmax$Species_Name,levels=c("Mesocentrotus franciscanus","Strongylocentrotus purpuratus","Pomaulax gibberosus", "Tegula pulligo")) # specify order of species name factor
+
+
+CTmax<-CTmax %>% dplyr::mutate(Treatment_Name = case_when(
+  Treatment == 'Macrocystis' ~ 'High quality food',
+  Treatment == 'Saccharina' ~ 'Low quality food',
+  Treatment == 'Unfed' ~ 'No food')) # do same for GrazerWeights
+
+
+plot5<- ggplot(data=CTmax,aes(x=Treatment_Name,y=LOE_sec,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species_Name,scale='free_y')+ggtitle("Heat resistance")+labs(y='Time to LOE (s)')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'))+xlab("Treatment")+ theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position = "none")
+
+plot6<- ggplot(data=CTmax,aes(x=Species_Name,y=LOE_sec,fill=Species_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+ggtitle("Heat resistance")+labs(y='Time to LOE (s)')+ scale_fill_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+xlab("Species")+ theme(legend.text=element_text(face='italic'),axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ylim(0,350)+scale_x_discrete(name ="Species", labels=c("Mfra","Spur","Pgib",'Tpull'))
+
+#### HEAT RESISTANCE DIFFERENCES ACROSS TREATMENTS
+library(rstatix)
+res<- CTmax %>%
+    dunn_test(LOE_sec ~ Treatment, p.adjust.method = "bonferroni") # differences across treatments
+
+res <- res %>% add_xy_position(x = "Treatment")
+res$y.position<-(res$y.position-300) # moves y.position of stat_brackets (signif) lower down to reduce white space
+
+plot7<-ggboxplot(CTmax, x = "Treatment", y = "LOE_sec",outlier.shape=NA,fill="Treatment") +
+  stat_pvalue_manual(res, hide.ns = TRUE) +theme_bw(base_size=15)+labs(y='Time to LOE (s)')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.title.x = element_text(margin = margin(t = 25)),axis.text.x=element_blank())+ylim(0,450)
+
+
+ggsave(filename="HeatRes_Treatment",height=4, width=6, units="in", plot=plot7, device="png")
+
+
+#### HEAT RESISTANCE DIFFERENCES ACROSS SPECIES
+library(rstatix)
+CTmax %>% kruskal_effsize(LOE_sec ~ Species_Name)
+
+### Which Species are sign different? (for non-parametri KW-test)
+# Based on pair-wise using Dunn's test
+res1<- CTmax %>%
+    dunn_test(LOE_sec ~ Species_Name, p.adjust.method = "bonferroni")
+
+# Based on Wilcoxon test
+res2 <- CTmax %>%
+wilcox_test(LOE_sec ~ Species_Name, p.adjust.method = "bonferroni")
+res2
+##### NICE PLOT WITH P-VAL asterixs 
+res1 <- res1 %>% add_xy_position(x = "Species_Name")
+res1$y.position<-(res1$y.position-200) # moves y.position of stat_brackets (signif) lower down to reduce white space
+
+plot8<-ggboxplot(CTmax, x = "Species_Name", y = "LOE_sec",outlier.shape=NA,fill="Species_Name") +
+  stat_pvalue_manual(res1, hide.ns = TRUE) +theme_bw(base_size=15)+ 
+  xlab("Species") +labs(y='Time to LOE (s)')+ scale_fill_manual(values=c("lightsteelblue", "mediumpurple3",'brown2','orange2'),name='Species')+ theme(legend.text=element_text(face='italic'),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.title.x = element_text(margin = margin(t = 25)))+scale_x_discrete(name ="Species", labels=c("Mfra","Pgib","Spur",'Tpull'))
+
+# Heat Resistance Species-diffs with significance 
+ggsave(filename="HeatRes_Species",height=5, width=8, units="in", plot=plot8, device="png")
+
+
+
+
+###################################################
+############## SURVIVAL ANALYSIS ##################
+###################################################
+library(survival); library(ranger); library(ggfortify)
+
+# Example code to practice
+km <- with(veteran, Surv(time, status)) # use Surv to build standard survival object
+km_fit <- survfit(Surv(time, status) ~ 1, data=veteran) # Kaplan-Meier estimates of probability of survival over time
+summary(km_fit, times = c(1,30,60,90*(1:10))) # times function controls which time estimates to print (here, survival estimate for 1, 30, 60 and 90 days, and then every 90 days thereafter)
+
+
+# Kaplan-Meier Survival function - Grazer heat resistance - differences across treatment:
+km_heat <- survfit(Surv(LOE_sec) ~ Treatment_Name+Species_Name, data=CTmax) # overall model; no censored observations!
+km_heat_Spur <- survfit(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Strongylocentrotus purpuratus"))
+km_heat_Mfra <- survfit(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Mesocentrotus franciscanus"))
+km_heat_Pgib <- survfit(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Pomaulax gibberosus"))
+km_heat_Tpul <- survfit(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Tegula pulligo")) 
+
+# Statistical difference between treatments:
+survdiff(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Strongylocentrotus purpuratus")) # no diff
+survdiff(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Mesocentrotus franciscanus")) # no diff
+survdiff(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Pomaulax gibberosus")) # no diff
+survdiff(Surv(LOE_sec) ~ Treatment_Name, data=subset(CTmax,Species_Name=="Tegula pulligo")) # no diff
+
+# Build plot for each species' survival curve across treatments
+plot_heat_Spur<-autoplot(km_heat_Spur)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='none',plot.title = element_text(face = "italic"),text=element_text(size=12), axis.title=element_blank(),axis.text=element_blank(),plot.margin=unit(c(0.2,1,0.3,0.2), "cm"))+
+  xlab("Time (s)")+ylab('Population Survival')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+xlim(0,600)+labs(title="Strongylocentrotus purpuratus",tag="B")
+
+plot_heat_Mfra<-autoplot(km_heat_Mfra)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='none',plot.title = element_text(face = "italic"),text=element_text(size=12),axis.text.x= element_blank(),axis.title.x=element_blank(),plot.margin=unit(c(0.2,0.2,0.3,0.2), "cm"))+
+  xlab("Time (s)")+ylab('Population Survival')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+xlim(0,600)+labs(title="Mesocentrotus franciscanus",tag="A")
+
+plot_heat_Pgib<-autoplot(km_heat_Pgib)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='none',plot.title = element_text(face = "italic"),text=element_text(size=12),plot.margin=unit(c(0.1,0.2,0.2,0.2), "cm"))+
+  xlab("Percent Time (% seconds)")+ylab('Population Survival')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+labs(title="Pomaulax gibberosus",tag="C")+ scale_x_continuous(breaks=c(0,150,300,450,600),labels=c("0","25", "50","75", "100"),limits=c(0,600))
+
+plot_heat_Tpul<-autoplot(km_heat_Tpul)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position=c(0.7,0.5), legend.direction = 'horizontal',legend.margin=margin(t=-10,l=150,b=-10),plot.title = element_text(face = "italic"),text=element_text(size=12),  axis.text.y=element_blank(),axis.title.y=element_blank(),plot.margin=unit(c(0.1,1,0.2,0.2), "cm"))+xlab("Percent Time (% seconds)")+ylab('Population Survival')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+labs(title="Tegula pulligo",tag="D")+guides(fill=guide_legend(nrow=1,byrow=TRUE))+ scale_x_continuous(breaks=c(0,150,300,450,600),labels=c("0","25", "50","75", "100"),limits=c(0,600))
+
+# Multi-panel plot
+ggarrange(plot_heat_Mfra,plot_heat_Spur,  plot_heat_Pgib, plot_heat_Tpul,
+          nrow = 2, ncol = 2)
+
+ggsave(filename="HeatResistance_Treatment",height=5, width=7, units="in", plot=grid.arrange(plot_heat_Mfra,plot_heat_Spur, plot_heat_Pgib, plot_heat_Tpul+theme(legend.position='none'),legend, ncol = 2,nrow=3,  widths = c(2.2, 2), heights = c(2.6, 2.9,0.5)), device="png")
+
+##########
+# no differences across three food treatments for any species; lumping treatments together and testing for 
+# differences in survival time across species below
+##########
+
+# Kaplan-Meier survival function - Grazer heat resistance - differences across species:
+km_heat_Species<-survfit(Surv(LOE_sec) ~ Species_Name, data=CTmax)
+survdiff(Surv(LOE_sec) ~ Species_Name, data = CTmax)
+
+# Build plot for survival across species (treatments lumped together since no difference)
+plot_heat_Species<-autoplot(km_heat_Species)+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12), plot.margin= unit(c(0.1,1,0.2,0.2), "cm"),legend.text=element_text(face='italic'))+xlab("Percent Time (% seconds)")+ylab('Population Survival')+ scale_fill_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+ scale_colour_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+ labs(title="Survival time across species", tag="A") + guides(fill=guide_legend(nrow=2,byrow=TRUE))+ geom_segment(aes(y=0.5,yend=0.5,x=-Inf,xend=151),linetype="dashed",size=1)+geom_segment(aes(x=148,xend=148,y=-Inf,yend=0.5),colour='brown2',linetype="dashed",size=1)+geom_segment(aes(x=151,xend=151,y=-Inf,yend=0.5),colour='mediumpurple3',linetype="dashed",size=1)+geom_segment(aes(x=88,xend=88,y=-Inf,yend=0.5),colour='lightsteelblue',linetype="dashed",size=1)+geom_segment(aes(x=57.5,xend=57.5,y=-Inf,yend=0.5),colour='orange2',linetype="dashed",size=1)
+
+plot_heat_Species<-plot_heat_Species+ scale_x_continuous(breaks=c(0,150,300,450,600),
+        labels=c("0","25", "50","75", "100"))
+
+# + scale_x_continuous(labels = scales::percent_format(scale = 1)) 
+
+# Modified boxplot for plot inset
+plot6a<- ggplot(data=CTmax,aes(x=Species_Name,y=LOE_sec,colour=Species_Name))+geom_boxplot(outlier.shape=NA,lwd=1)+theme_bw(base_size=15)+labs(y='Time to LOE (s)')+ scale_colour_manual(values=c('brown2',"mediumpurple3","lightsteelblue" ,'orange2'),name='Species')+xlab("Species")+ theme(legend.position='none',legend.text=element_text(face='italic'),text=element_text(size=12),axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5),axis.title.x=element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ylim(0,350)+scale_x_discrete(name ="Species", labels=c("Mfra","Spur","Pgib",'Tpull'))
+
+# Species survival curve with boxplot inset
+SPP_Surv<-plot_heat_Species + annotation_custom(ggplotGrob(plot6a), xmin = 300, xmax = 620, 
+                       ymin = 0.3, ymax = 1)
+
+
+# SAVE FINAL PLOT SPECIES NO TREATMENT
+ggsave(filename="HeatResistance_Species",height=6, width=8, units="in", plot=SPP_Surv, device="png")
+
+# Multi-panel plot with Species Survival also:
+ggarrange(ggarrange(plot_heat_Mfra, plot_heat_Spur, plot_heat_Pgib, plot_heat_Tpul,common.legend = TRUE, legend="bottom",ncol = 2, nrow =2),
+          SPP_Surv,
+          nrow = 2, ncol = 1)
+
+legend <- get_legend(plot_heat_Tpul) # extract legend object
+
+# SAVE FINAL PLOT COMPOSITE
+ggsave(filename="HeatResistance_Composite",height=9, width=7, units="in", plot=grid.arrange(grid.arrange(plot_heat_Mfra,plot_heat_Spur, plot_heat_Pgib, plot_heat_Tpul+theme(legend.position='none'),legend, ncol = 2,nrow=3,  widths = c(2.2, 2), heights = c(2.6, 2.9,0.5)),SPP_Surv, ncol =1, nrow =2), device="png")
+
+
+# Cox Proportional Hazard model (include all covariates):
+# Assumption that covariates do not vary with time is met by data
+cox_heat<- coxph(Surv(LOE_sec) ~ Treatment_Name * Species_Name, data=CTmax)
+summary(cox_heat)
+cox_fit <- survfit(cox_heat)
+autoplot(cox_fit) # see warning, this curve doesn't consider interactions i.e. not useful
+
+
+##################################
+###### IN SITU (CAGE) TEMPS ######
+##################################
+Cage1Temp<-read.csv("Cage_TempLogger1.csv")
+Cage4Temp<-read.csv("Cage_TempLogger2.csv")
+Cage7Temp<-read.csv("Cage_TempLogger3.csv")
+
+Cage1Temp<-Cage1Temp[-c(1:20),] # remove rows 1-20 (metadata)
+Cage4Temp<-Cage4Temp[-c(1:20),] # remove rows 1-20 (metadata)
+Cage7Temp<-Cage7Temp[-c(1:20),] # remove rows 1-20 (metadata)
+
+# Change column names
+colnames(Cage1Temp) <- c("date_time", "Temp_C") # same for Cage 4 and 7 loggers
+Cage1Temp$Temp_C<-as.numeric(Cage1Temp$Temp_C) # make temps column numeric
+
+# Split date_time column (do for each cage)
+Cage1Temp$Date <- as.Date(Cage1Temp$date_time) # creates date column
+Cage1Temp$Time <- format(as.POSIXct(Cage1Temp$date_time),format= "%H:%M:%S") # creates time column
+
+### Plot temperature time-series (from 25th March to 15th May 2021)
+# First, remove dates before & after caging period, and days where cages were out of the water (during MR assays), where temps reflect air temp not in situ seawater temp.
+
+# Cage 1
+plot_Cage1T<-Cage1Temp %>% filter(Date!='2021-04-08' & Date!='2021-05-13' & Date!='2021-05-14' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 1",tag="A")+annotate('text',x=as.Date("2021-04-09"),y=13.5,label="Week 2",colour='darkgrey')+coord_cartesian(ylim=c(8,13),clip="off")+annotate('text',x=as.Date("2021-05-14"),y=13.5,label="Week 7",colour='darkgrey')
+
+#
+pC1<-plot_Cage1T + annotate("rect",
+    xmin = as.Date("2021-04-08"), xmax = as.Date("2021-04-10"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3) + annotate("rect",
+    xmin = as.Date("2021-05-13"), xmax = as.Date("2021-05-15"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3)
+
+# Cage # 4
+plot_Cage4T<-Cage4Temp %>% filter(Date!='2021-04-08' & Date!='2021-05-13' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 4",tag="B")
+
+pC4<-plot_Cage4T + annotate("rect",
+    xmin = as.Date("2021-04-08"), xmax = as.Date("2021-04-10"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3) + annotate("rect",
+    xmin = as.Date("2021-05-13"), xmax = as.Date("2021-05-15"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3)
+
+# Cage # 7
+# Cage 7 in-air period over night; adding column to filter
+Cage7Temp$InAir <- NA #initialise
+Cage7Temp$InAir[963:986] <- "Air"
+Cage7Temp$InAir[2642:2655] <- "Air"
+Cage7Temp$InAir[is.na(Cage7Temp$InAir)] <- "Water"
+Cage7Temp$InAir<-as.factor(Cage7Temp$InAir)
+
+plot_Cage7T<-Cage7Temp %>% filter(InAir!='Air' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_text(vjust=-0.5))+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 7",tag="C")
+
+pC7<-plot_Cage7T + annotate("rect",
+    xmin = as.Date("2021-04-08"), xmax = as.Date("2021-04-10"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3) + annotate("rect",
+    xmin = as.Date("2021-05-13"), xmax = as.Date("2021-05-15"), 
+    ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3)
+
+ggarrange(pC1, pC4, pC7,
+          nrow = 3, ncol = 1)
+
+ggsave(filename="Cage_Temps",height=9, width=7, units="in", plot=grid.arrange(pC1, pC4, pC7, ncol =1, nrow =3,heights = c(2.6, 2.6,2.9)), device="png")
+
+```
+
+Statistical Analysis
+``` {r Stats, eval=FALSE}
+
+###################################
+###### O2 CONSUMPTION MODELS ######
+###################################
+
+#### ANOVAS MASS-INDEPENDENT OXYGEN CONSUMPTION
+# For a given species; Week 2
+Mfra_W2<-aov(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& rsqrt>=0.90 & Week=='Week 2'))
+# For a given species; Week 7
+Mfra_W7<-aov(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& Quality!='Bad' & Week=='Week 7'))
+
+summary(Mfra_W2)
+
+hist(Mfra_W2$residuals)   # Makes histogram of residuals  
+plot(Mfra_W2, which = 2) 
+
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Mfra_W2)
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
+
+# Non-parametric test of treatment differences
+kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin' & Quality!='Bad' & Week=='Week 2')) # KW test for multiple treatment levels
+
+# Test which treatment levels are different:
+wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red sea urchin' & Quality!='Bad' & Week=='Week 2'),p.adjust.method = "bonferroni")
+
+
+### REPEAT ABOVE PROCEEDURE FOR EACH SPECIES AND FOR WEEK 2 AND WEEK 7
+
+### PERCENTAGE DIFFERENCE IN MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
+Treat_Diff<-CageExpSub %>% filter(Quality!='Bad') %>% group_by(Species,Treatment,Week) %>% 
+  dplyr::summarize(mean=mean(res2.VO2.WW),sd=sd(res2.VO2.WW)) %>%
+  ungroup() %>% tidyr::drop_na()
+
+Treat_Diff<-Treat_Diff %>%
+  group_by(Species,Week) %>%
+  mutate(Diff = mean - lag(mean, default = mean[1]))
+
+Treat_Diff[Treat_Diff == 0] <- NA 
+
+Treat_Diff<-Treat_Diff %>%
+  group_by(Species,Week) %>%
+  mutate(Mean_tot = mean(mean, default = mean[1]))
+
+Perc_diff_Acute$Diff_by_Avr<-Perc_diff_Acute$Diff/Perc_diff_Acute$Mean_tot
+Perc_diff_Acute$Perc<-Perc_diff_Acute$Diff_by_Avr*100
+
+
+#### ANOVAs ABSOLUTE OXYGEN CONSUMPTION
+# One-Way ANOVA 
+A1<-aov(MO2_ml.h ~ Treatment, data = subset(CageExp,Common_Name=='Red sea urchin', Quality!='Bad', Week='Week 2'))
+summary(A1)
+
+# Checking model assumptions
+par(mfrow = c(1,2))
+hist(A1$residuals)   # Makes histogram of residuals  
+plot(A1, which = 2)   # Makes Q-Q plot, check normality
+
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = A1)
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals ) # p < 0.05, normality is violated
+
+# Which location is different? (2-way ANOVA post hoc)
+TukeyHSD(A1, which = "Treatment")
+
+#### NORMALITY TEST FAILED: CONTINUE WITH NON-PARAMETRIC
+# Grubb's Outlier test:
+library(outliers)
+#subset for further tests:
+sub<-subset(CageExp,Common_Name=='Red sea urchin' & Quality!='Bad' & Week=='Week 2')
+
+test <- grubbs.test(sub$MO2_ml.h)
+test # confirms highest kelp value as an outlier! Ok to remove
+
+# Non-parametric Mann-Whitney U test:
+wilcox.test(MO2_ml.h ~ Treatment, data = subset(CageExp,Common_Name=='Red sea urchin' & Quality!='Bad' & Week=='Week 2')) # only compares 2 treatment levels
+kruskal.test(MO2_ml.h ~ Treatment, data = subset(CageExp,Common_Name=='Red sea urchin' & Quality!='Bad' & Week=='Week 2')) # for multiple treatment levels
+
+
+# test for effect size (0.01- < 0.06 (small effect), 0.06 – < 0.14 (moderate effect) and >= 0.14 (large effect)) 
+library(rstatix)
+sub %>% kruskal_effsize(MO2_ml.h ~ Treatment)
+
+### Which treatments are sign different? (for non-parametri KW-test)
+# Based on pair-wise using Dunn's test
+res1<- sub %>%
+    dunn_test(MO2_ml.h ~ Treatment, p.adjust.method = "bonferroni")
+
+# Based on Wilcoxon test
+res2 <- sub %>%
+wilcox_test(MO2_ml.h ~ Treatment, p.adjust.method = "bonferroni")
+res2
+
+##### NICE PLOT WITH P-VAL asterixs 
+res1 <- res1 %>% add_xy_position(x = "Treatment")
+ggboxplot(sub, x = "Treatment", y = "MO2_ml.h") +
+  stat_pvalue_manual(res1, hide.ns = TRUE) +theme_bw(base_size=15)+ 
+  xlab("Treatment") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'))
+
+
+###################################
+######## BODY MASS MODELS #########
+###################################
+### WET MASS
+W1<-aov(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week =="Week 0"))
+
+aov_residuals <- residuals(object = W1) # check normality
+shapiro.test(x = aov_residuals ) # check normality
+
+# non-parametric test
+kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week=='Week 0')) # for multiple treatment levels
+
+### DRY MASS
+W2<-aov(DryWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week =="Week 7"))
+
+aov_residuals <- residuals(object = W2) # check normality
+shapiro.test(x = aov_residuals ) # check normality
+
+kruskal.test(DryWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week=='Week 7'))
+
+### ASH-FREE DRY MASS
+W3<-aov(AFDW_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week =="Week 7"))
+
+aov_residuals <- residuals(object = W3) # check normality
+shapiro.test(x = aov_residuals ) # check normality
+
+kruskal.test(AFDW_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week=='Week 7'))
+
+
+#### TESTING WHICH TREATMENT LEVELS ARE DIFFERENT
+wilcox_test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week =="Week 0"),p.adjust.method = "bonferroni")
+```
+Sensitivity Test
+``` {r Sensitivity test, eval=FALSE}
+##########################################
+#### SENSITIVITY TEST RED SEA URCHINS ####
+give.n <- function(x){
+  return(c(y = median(x)*1.05, label = length(x))) 
+  # experiment with the multiplier to find the perfect position
+}
+
+pS1<-CageExpSub %>% filter(rsqrt>=0.9 & Species=='Mesocentrotus franciscanus' & WetWeight_g<70) %>% group_by(Species, Treatment_Name) %>%  # do the same calcs for each box
+  dplyr::mutate(value2 = filter_lims(res2.VO2.WW)) %>%  # new variable (value2) so as not to displace first one)
+  ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
+  geom_boxplot(na.rm = TRUE, coef = 5) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.25,0.40))+theme_bw(base_size=15)+theme(plot.title = element_text(face='italic'),legend.position=c(0.7,0.5), legend.direction = 'horizontal',legend.margin=margin(t=-10,l=150,b=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+stat_summary(fun.data= give.n, geom = "text", fun = median, position = position_dodge(width = 0.75),vjust=-6,size=4) + ggtitle("Mesocentrotus franciscanus")
+
+
+# When removing largest urchins, how many individuals per treatment?
+CageExpSub %>% filter(rsqrt>=0.9 & Species=='Mesocentrotus franciscanus' & WetWeight_g<70) %>% group_by(Treatment_Name,Week) %>% tally() # but this includes outliers
+
+# Wet Mass differences across treatment for subset
+pS3<-ggplot(data=subset(GrazerWeights,Week=='Week 0' & Species=='Mesocentrotus franciscanus' & WetWeight_g<70),aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+ggtitle("Wet Mass")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(plot.title = element_text(face='italic'),legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))+ylim(c(5,70))+stat_summary(fun.data = give.n, geom = "text", fun = median,
+                  position = position_dodge(width = 0.75),vjust=-12,size=4) + ggtitle("Mesocentrotus franciscanus") # number of observations per group without outliers
+
+# Are wet masses different across treatments with this subset?
+# non-parametric test
+kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red sea urchin' & Week=='Week 0' & WetWeight_g<70)) # NO DIFFERENCES ACROSS TREATMENTS HERE
+
+
+# Stats for mass-independent MO2 of subset:
+# Non-parametric test of treatment differences
+kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # KW test for multiple treatment levels
+
+# WEEK 2 and WEEK 7 significantly different with subset <70g wet mass in red sea urchins
+
+# Test which treatment levels are different:
+wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70),p.adjust.method = "bonferroni")
+
+##########################################
+#### SENSITIVITY TEST RED TURBAN SNAIL ####
+pS2<-CageExpSub %>% filter(rsqrt>=0.9 & Species=='Pomaulax gibberosus' & WetWeight_g<40) %>%
+  group_by(Species, Treatment_Name) %>%  # do the same calcs for each box
+  dplyr::mutate(value2 = filter_lims(res2.VO2.WW)) %>%  # new variable (value2) so as not to displace first one)
+  ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
+  geom_boxplot(na.rm = TRUE, coef = 5) +  # remove NAs
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+theme_bw(base_size=15)+theme(plot.title = element_text(face='italic'),legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+stat_summary(fun.data= give.n, geom = "text", fun = median, position = position_dodge(width = 0.75),vjust=-9,size=4)+ggtitle("Pomaulax gibberosus")+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.35,0.3))
+
+# When removing largest turban snails, how many individuals per treatment?
+CageExpSub %>% filter(rsqrt>=0.9 & Species=='Pomaulax gibberosus' & WetWeight_g<40) %>% group_by(Treatment_Name,Week) %>% tally()
+
+# Wet Mass differences across treatment for red turban snail subset
+pS4<-ggplot(data=subset(GrazerWeights,Week=='Week 0' & Species=='Pomaulax gibberosus' & WetWeight_g<40),aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+ggtitle("Wet Mass")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(plot.title = element_text(face='italic'),legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))+ylim(c(5,60))+stat_summary(fun.data = give.n, geom = "text", fun = median,
+                  position = position_dodge(width = 0.75),vjust=-10,size=4)+ggtitle("Pomaulax gibberosus") # number of observations per group without outliers
+
+# Are wet masses different across treatments with this subset?
+# non-parametric test
+kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red turban snail' & Week=='Week 0' & WetWeight_g<40)) # NO MASS DIFFERENCES ACROSS TREATMENTS HERE
+
+# Stats for mass-independent MO2 of subset:
+# Non-parametric test of treatment differences
+kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red turban snail' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40)) # KW test for multiple treatment levels
+
+# WEEK 2 and WEEK 7 significantly different with subset <70g wet mass in red sea urchins
+
+# Test which treatment levels are different:
+wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red turban snail' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40),p.adjust.method = "bonferroni")
+
+### PLOTS FOR SENSITIVITY TEST
+# MO2 
+legend1 <- get_legend(pS1) # extract legend object
+
+ggsave(filename="SensitivityTest_MO2.png",height=4, width=8, units="in", plot=grid.arrange(pS1+theme(legend.position='none'),pS2+theme(legend.position='none'),legend1, ncol = 2,nrow=2, widths = c(2.7, 2.7), heights = c(2.5,0.3)),device="png")
+
+# Wet Mass 
+ggsave(filename="SensitivityTest_WetMass.png",height=4, width=7, units="in", plot=grid.arrange(pS3+theme(legend.position='none'),pS4+theme(legend.position='none'),legend1, ncol = 2,nrow=2, widths = c(2.7, 2.7), heights = c(2.5,0.3)),device="png")
+
+
+```

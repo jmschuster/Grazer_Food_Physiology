@@ -536,6 +536,17 @@ wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red
 
 ### REPEAT ABOVE PROCEEDURE FOR EACH SPECIES AND FOR WEEK 2 AND WEEK 7
 
+### GLM FOR MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
+# Separate model for each species & measurement week
+library(car)
+glm_Mfra_W2 <- glm(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& rsqrt>=0.90 & Week=='Week 2'))
+
+Anova(glm_Mfra_W2) # function Anova from 'car' library takes care of unbalanced design
+anova(glm_Mfra_W2)
+
+coef(glm_Mfra_W2) # extract coefficients
+confint(glm_Mfra_W2) # extract confidence intervals
+
 ### PERCENTAGE DIFFERENCE IN MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
 Treat_Diff<-CageExpSub %>% filter(Quality!='Bad') %>% group_by(Species,Treatment,Week) %>% 
   dplyr::summarize(mean=mean(res2.VO2.WW),sd=sd(res2.VO2.WW)) %>%

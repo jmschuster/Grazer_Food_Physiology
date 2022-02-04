@@ -208,18 +208,11 @@ plot3<-CageExpSub %>% filter(rsqrt>=0.90) %>%
 ggsave(filename="MassIndep_MR",height=6, width=7, units="in", plot=plot3, device="png")
 
 #### BUILDING SEPARATE PLOTS FOR EACH SPECIES
-stat.test <- CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus') %>%
-  group_by(Week) %>%
-  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
-stat.test
-
-stat.test <- stat.test %>%
-  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
 
 # Filling boxplots based on significance
 CageExpSub <- CageExpSub %>% mutate(Signif = case_when(
-  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Unfed' ~ 'Yes',
-  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Unfed' ~ 'No',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'No',
   Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
   Species=='Mesocentrotus franciscanus' & Week=='Week 7' & Treatment=='Unfed' ~ 'Yes',
   Species=='Mesocentrotus franciscanus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'Yes',
@@ -230,8 +223,8 @@ CageExpSub <- CageExpSub %>% mutate(Signif = case_when(
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Unfed' ~ 'Yes',
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'No',
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Macrocystis' ~ 'No',
-  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Unfed' ~ 'No',
-  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Unfed' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'No',
@@ -245,17 +238,7 @@ plot3a<-CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
   xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")
 
-#plot3a<-plot3a+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE) 
 ###
-stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
-  group_by(Week) %>%
-  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
-stat.test
-
-stat.test <- stat.test %>%
-  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
-
-stat.test$y.position.new<-stat.test$y.position+0.2 # adjust y-position of significance labels
 
 plot3b<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
@@ -263,16 +246,7 @@ plot3b<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpur
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
   xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Strongylocentrotus purpuratus",tag="B")
 
-#plot3b<-plot3b+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE,y.position='y.position.new') 
-
 ###
-stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
-  group_by(Week) %>%
-  wilcox_test(res2.VO2.WW ~ Treatment_Name) 
-stat.test
-
-stat.test <- stat.test %>%
-  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
 
 plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
@@ -280,23 +254,12 @@ plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
   xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.6))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
 
-#plot3c<-plot3c + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE) 
 ###
-stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
-  group_by(Week) %>%
-  wilcox_test(res2.VO2.WW/N_Dusky ~ Treatment_Name) 
-stat.test
-
-stat.test <- stat.test %>%
-  add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
 
 plot3d<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW/N_Dusky, colour = Treatment_Name))+ geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
   xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")
-
-#plot3d<-plot3d + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003, hide.ns = TRUE) 
-
 
 legend2 <- get_legend(plot3d) # extract legend object
 
@@ -531,34 +494,148 @@ Statistical Analysis
 ###################################
 
 #### ANOVAS MASS-INDEPENDENT OXYGEN CONSUMPTION
-# For a given species; Week 2
-Mfra_W2<-aov(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& rsqrt>=0.90 & Week=='Week 2'))
-# For a given species; Week 7
-Mfra_W7<-aov(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& Quality!='Bad' & Week=='Week 7'))
+####### MESOCENTROTUS FRANCISCANUS
+# Subset for species, remove measurements with r squared <0.90, separate df for each week
+Mfra<-CageExpSub %>% filter(Common_Name=='Red sea urchin' & rsqrt>=0.90 & Week=='Week 2')
+Mfra7<-CageExpSub %>% filter(Common_Name=='Red sea urchin' & rsqrt>=0.90 & Week=='Week 7')
 
-summary(Mfra_W2)
+Mfra_W2<-aov(res2.VO2.WW ~ Treatment, data = Mfra) # Week 2
+Mfra_W7<-aov(res2.VO2.WW ~ Treatment, data = Mfra7) # Week 7
 
 hist(Mfra_W2$residuals)   # Makes histogram of residuals  
-plot(Mfra_W2, which = 2) 
+plot(Mfra_W2, which = 2)  # qqnorm plot
 
 # Shapiro-Wilko test for normality
 aov_residuals <- residuals(object = Mfra_W2)
-# Run Shapiro-Wilk test
 shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
 
+# Check for outliers
+library(outliers)
+# Week 2
+grubbs.test(Mfra$res2.VO2.WW) # outlier test
+Mfra<-Mfra %>% filter(res2.VO2.WW<4) # remove 2 outliers (row 16 and 37 of full Mfra df)
+# Week 7
+grubbs.test(Mfra7$res2.VO2.WW) # outlier test
+grubbs.test(Mfra7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
+Mfra7<-Mfra7 %>% filter(res2.VO2.WW<1 & res2.VO2.WW >-0.8) # remove 2 outliers 
+
 # Non-parametric test of treatment differences
-kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin' & Quality!='Bad' & Week=='Week 2')) # KW test for multiple treatment levels
+kruskal.test(res2.VO2.WW ~ Treatment, data = Mfra) # KW test for multiple treatment levels
 
 # Test which treatment levels are different:
-wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red sea urchin' & Quality!='Bad' & Week=='Week 2'),p.adjust.method = "bonferroni")
+wilcox_test(res2.VO2.WW ~ Treatment, data = Mfra, p.adjust.method = "bonferroni")
+
+########## STRONGYLOCENTROTUS PURPURATUS
+# Subset for species, remove measurements with r squared <0.90, separate df for each week
+Spur<-CageExpSub %>% filter(Common_Name=='Purple sea urchin' & rsqrt>=0.90 & Week=='Week 2')
+Spur7<-CageExpSub %>% filter(Common_Name=='Purple sea urchin' & rsqrt>=0.90 & Week=='Week 7')
+
+Spur_W2<-aov(res2.VO2.WW ~ Treatment, data = Spur) # Week 2
+Spur_W7<-aov(res2.VO2.WW ~ Treatment, data = Spur7) # Week 7
+
+hist(Spur_W2$residuals)   # Makes histogram of residuals  
+plot(Spur_W2, which = 2)  # qqnorm plot
+
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Spur_W2)
+shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
+
+# Check for outliers
+library(outliers)
+# Week 2
+grubbs.test(Spur$res2.VO2.WW) # outlier test; highest val is outlier
+Spur<-Spur %>% filter(res2.VO2.WW<4) # remove 1 outliers (row 102 of full Spur df)
+# Week 7
+grubbs.test(Spur7$res2.VO2.WW) # outlier test
+grubbs.test(Spur7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
+Spur7<-Spur7 %>% filter(res2.VO2.WW<2 & res2.VO2.WW >-1.6) # remove 2 outliers 
+
+# Tukeys post hoc for Week 2 (Week 2 Spur data meets assumptions after outlier is removed)
+TukeyHSD(Spur_W2, which = "Treatment")
+
+# Non-parametric test of treatment differences Week 7
+kruskal.test(res2.VO2.WW ~ Treatment, data = Spur7) # KW test for multiple treatment levels
+
+# Test which treatment levels are different:
+wilcox_test(res2.VO2.WW ~ Treatment, data = Spur7, p.adjust.method = "bonferroni")
+
+########## POMAULAX GIBBEROSUS
+# Subset for species, remove measurements with r squared <0.90, separate df for each week
+Pgib<-CageExpSub %>% filter(Common_Name=='Red turban snail' & rsqrt>=0.90 & Week=='Week 2')
+Pgib7<-CageExpSub %>% filter(Common_Name=='Red turban snail' & rsqrt>=0.90 & Week=='Week 7')
+
+Pgib_W2<-aov(res2.VO2.WW ~ Treatment, data = Pgib) # Week 2
+Pgib_W7<-aov(res2.VO2.WW ~ Treatment, data = Pgib7) # Week 7
+
+hist(Pgib_W2$residuals)   # Makes histogram of residuals  
+plot(Pgib_W2, which = 2)  # qqnorm plot
+
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Pgib_W2)
+shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
+
+# Check for outliers
+library(outliers)
+# Week 2
+grubbs.test(Pgib$res2.VO2.WW) # outlier test
+Pgib<-Pgib %>% filter(res2.VO2.WW<1.1 & res2.VO2.WW >-0.9) # remove 5 outliers
+
+# Week 7
+grubbs.test(Pgib7$res2.VO2.WW) # outlier test; repeat after removing each outlier IDd (one at a time)
+grubbs.test(Pgib7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
+Pgib7<-Pgib7 %>% filter(res2.VO2.WW<0.4 & res2.VO2.WW>-0.7) # remove 5 outliers 
+
+# Tukeys post hoc for Week 2 (Week 2 Pgib data meets assumptions after outliers are removed)
+TukeyHSD(Pgib_W2, which = "Treatment")
+
+# Non-parametric test of treatment differences; Week 7
+kruskal.test(res2.VO2.WW ~ Treatment, data = Pgib7) # KW test for multiple treatment levels
+
+# Test which treatment levels are different; Week 7
+wilcox_test(res2.VO2.WW ~ Treatment, data = Pgib7, p.adjust.method = "bonferroni")
+
+####### TEGULA PULLIGO
+# Subset for species, remove measurements with r squared <0.90, separate df for each week
+Tpul<-CageExpSub %>% filter(Common_Name=='Dusky turban snail' & rsqrt>=0.90 & Week=='Week 2')
+Tpul7<-CageExpSub %>% filter(Common_Name=='Dusky turban snail' & rsqrt>=0.90 & Week=='Week 7')
+Tpul$res2.VO2.WW.Ind<-(Tpul$res2.VO2.WW/Tpul$N_Dusky)
+Tpul7$res2.VO2.WW.Ind<-(Tpul7$res2.VO2.WW/Tpul7$N_Dusky) # calc individual avrg MO2 (as multiple duskys per chamber)
+
+Tpul_W2<-aov(res2.VO2.WW.Ind ~ Treatment, data = Tpul) # Week 2
+Tpul_W7<-aov(res2.VO2.WW.Ind ~ Treatment, data = Tpul7) # Week 7
+
+hist(Tpul_W2$residuals)   # Makes histogram of residuals  
+plot(Tpul_W2, which = 2)  # qqnorm plot
+
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Tpul_W2)
+shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
+
+# Check for outliers where normality test failed
+library(outliers)
+# Week 2
+grubbs.test(Tpul$res2.VO2.WW.Ind) # outlier test
+Tpul<-Tpul %>% filter(res2.VO2.WW.Ind<0.2) # remove 2 outliers (row 16 and 37 of full Tpul df)
+
+# Non-parametric test of treatment differences
+kruskal.test(res2.VO2.WW.Ind ~ Treatment, data = Tpul) # KW test for multiple treatment levels
+
+# Test which treatment levels are different:
+wilcox_test(res2.VO2.WW.Ind ~ Treatment, data = Tpul, p.adjust.method = "bonferroni")
 
 
-### REPEAT ABOVE PROCEEDURE FOR EACH SPECIES AND FOR WEEK 2 AND WEEK 7
+
 
 ### GLM FOR MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
 # Separate model for each species & measurement week
 library(car); library(jtools); library(ggstance)
-glm_Mfra_W2 <- glm(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& rsqrt>=0.90 & Week=='Week 2'))
+glm_Mfra_W2 <- glm(res2.VO2.WW ~ Treatment, data = Mfra)
+Mfra7$res2.VO2.WW.pos<-Mfra7$res2.VO2.WW+1
+glm_Mfra_W7 <- glm(res2.VO2.WW.pos ~ Treatment, data = Mfra7,family='gamma')
+
+
+hist(glm_Mfra_W2$residuals)   # Makes histogram of residuals  
+plot(glm_Mfra_W2, which = 2)
 
 Anova(glm_Mfra_W2) # function Anova from 'car' library takes care of unbalanced design
 anova(glm_Mfra_W2)

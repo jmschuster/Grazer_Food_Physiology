@@ -216,14 +216,36 @@ stat.test
 stat.test <- stat.test %>%
   add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
 
+# Filling boxplots based on significance
+CageExpSub <- CageExpSub %>% mutate(Signif = case_when(
+  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 7' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Mesocentrotus franciscanus' & Week=='Week 7' & Treatment=='Macrocystis' ~ 'No',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 2' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'No',
+  Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Macrocystis' ~ 'No',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Unfed' ~ 'No',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'Yes',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
+  Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Unfed' ~ 'No',
+  Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'No',
+  Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Macrocystis' ~ 'No'))
+
+CageExpSub$Signif<-as.factor(CageExpSub$Signif)
+
 plot3a<-CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus') %>%
-  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name)) +
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif)) +
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1)+ 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")
 
-plot3a<-plot3a+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
-    hide.ns = TRUE) 
+#plot3a<-plot3a+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE) 
 ###
 stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
   group_by(Week) %>%
@@ -236,13 +258,12 @@ stat.test <- stat.test %>%
 stat.test$y.position.new<-stat.test$y.position+0.2 # adjust y-position of significance labels
 
 plot3b<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpuratus') %>%
-  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name))+
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Strongylocentrotus purpuratus",tag="B")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Strongylocentrotus purpuratus",tag="B")
 
-plot3b<-plot3b+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
-    hide.ns = TRUE,y.position='y.position.new') 
+#plot3b<-plot3b+ stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE,y.position='y.position.new') 
 
 ###
 stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
@@ -254,13 +275,12 @@ stat.test <- stat.test %>%
   add_xy_position(x = "Week", dodge = 0.8,fun='median_iqr')
 
 plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
-  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Treatment_Name))+
+  ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("white", "white",'darkgrey'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.6))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.6))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
 
-plot3c<-plot3c + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
-    hide.ns = TRUE) 
+#plot3c<-plot3c + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,hide.ns = TRUE) 
 ###
 stat.test <- CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
   group_by(Week) %>%
@@ -273,10 +293,9 @@ stat.test <- stat.test %>%
 plot3d<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW/N_Dusky, colour = Treatment_Name))+ geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 3), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")
 
-plot3d<-plot3d + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003,
-    hide.ns = TRUE) 
+#plot3d<-plot3d + stat_pvalue_manual(stat.test, label = "p.adj.signif", tip.length = 0.003, hide.ns = TRUE) 
 
 
 legend2 <- get_legend(plot3d) # extract legend object
@@ -538,7 +557,7 @@ wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red
 
 ### GLM FOR MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
 # Separate model for each species & measurement week
-library(car)
+library(car); library(jtools); library(ggstance)
 glm_Mfra_W2 <- glm(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin'& rsqrt>=0.90 & Week=='Week 2'))
 
 Anova(glm_Mfra_W2) # function Anova from 'car' library takes care of unbalanced design
@@ -546,6 +565,26 @@ anova(glm_Mfra_W2)
 
 coef(glm_Mfra_W2) # extract coefficients
 confint(glm_Mfra_W2) # extract confidence intervals
+
+summ(glm_Mfra_W2,confint = TRUE, digits = 3) #confint includes CIs instead of SE
+effect_plot(glm_Mfra_W2, pred = Treatment, plot.points = TRUE)
+plot_summs(glm_Mfra_W2,scale=TRUE)
+
+# MY OWN COEFFICIENT PLOT
+coeff_matrix<-as.data.frame(summary(glm_Mfra_W2)$coefficients)
+coeff_matrix$Treatment<-c("High quality food", "Low quality food" , "No food")
+coeff_matrix$Week<-c("Week 2")
+coeff_matrix$Treatment<-as.factor(coeff_matrix$Treatment)
+coeff_matrix$Week<-as.factor(coeff_matrix$Week)
+ci<-as.data.frame(confint(glm_Mfra_W2)) 
+coeff_matrix<-cbind(coeff_matrix,ci)
+names(coeff_matrix)[names(coeff_matrix) == "2.5 %"] <- "lower"
+names(coeff_matrix)[names(coeff_matrix) == "97.5 %"] <- "upper"
+
+# repeat above with week 7 model
+coeff_matrix<-rbind(coeff_matrix,coeff_matrix7)
+
+ggplot(coeff_matrix,aes(x=Week,y=Estimate,colour=Treatment))+geom_point(size=3,position=position_dodge(0.8))+theme_bw(base_size=15)+geom_hline(yintercept=0,colour="black")+geom_errorbar(data=coeff_matrix, aes(ymin=lower, ymax=upper),position=position_dodge(width=0.8),width=0.1)+theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank())+scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'), name='Treatment')
 
 ### PERCENTAGE DIFFERENCE IN MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
 Treat_Diff<-CageExpSub %>% filter(Quality!='Bad') %>% group_by(Species,Treatment,Week) %>% 

@@ -663,24 +663,15 @@ coeff_matrix<-rbind(coeff_matrix,coeff_matrix7)
 
 ggplot(coeff_matrix,aes(x=Week,y=Estimate,colour=Treatment))+geom_point(size=3,position=position_dodge(0.8))+theme_bw(base_size=15)+geom_hline(yintercept=0,colour="black")+geom_errorbar(data=coeff_matrix, aes(ymin=lower, ymax=upper),position=position_dodge(width=0.8),width=0.1)+theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank())+scale_colour_manual(values=c("seagreen", "yellow4",'seashell3'), name='Treatment')
 
-### PERCENTAGE DIFFERENCE IN MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES
-Treat_Diff<-CageExpSub %>% filter(Quality!='Bad') %>% group_by(Species,Treatment,Week) %>% 
-  dplyr::summarize(mean=mean(res2.VO2.WW),sd=sd(res2.VO2.WW)) %>%
-  ungroup() %>% tidyr::drop_na()
+### PERCENTAGE DIFFERENCE IN MASS-INDEPENDENT MO2 ACROSS TREATMENTS/SPECIES; do for each spp
+Mfra_all<-rbind(Mfra,Mfra7)
+Mfra_Diff<-Mfra_all %>% group_by(Week,Treatment) %>% 
+    dplyr::summarize(mean=mean(res2.VO2.WW),sd=sd(res2.VO2.WW)) %>%
+    ungroup() %>% tidyr::drop_na()
 
-Treat_Diff<-Treat_Diff %>%
-  group_by(Species,Week) %>%
-  mutate(Diff = mean - lag(mean, default = mean[1]))
-
-Treat_Diff[Treat_Diff == 0] <- NA 
-
-Treat_Diff<-Treat_Diff %>%
-  group_by(Species,Week) %>%
-  mutate(Mean_tot = mean(mean, default = mean[1]))
-
-Perc_diff_Acute$Diff_by_Avr<-Perc_diff_Acute$Diff/Perc_diff_Acute$Mean_tot
-Perc_diff_Acute$Perc<-Perc_diff_Acute$Diff_by_Avr*100
-
+# Adding a constant of 1, to make all values positive
+Mfra_Diff$mean<-Mfra_Diff$mean+1
+# continue in excel from here
 
 #### ANOVAs ABSOLUTE OXYGEN CONSUMPTION
 # One-Way ANOVA 

@@ -129,9 +129,9 @@ CageExp$Species<-factor(CageExp$Species,levels=c("Mesocentrotus franciscanus","S
 
 
 CageExp<-CageExp %>% dplyr::mutate(Treatment_Name = case_when(
-  Treatment == 'Macrocystis' ~ 'High quality food',
-  Treatment == 'Saccharina' ~ 'Low quality food',
-  Treatment == 'Unfed' ~ 'No food'))
+  Treatment == 'Macrocystis' ~ 'High quality macroalgae',
+  Treatment == 'Saccharina' ~ 'Low quality macroalgae',
+  Treatment == 'Unfed' ~ 'No macroalgae'))
 
 # Rescale with outliers removed
 filter_lims <- function(x){
@@ -297,9 +297,9 @@ CTmax$Species_Name<-factor(CTmax$Species_Name,levels=c("Mesocentrotus franciscan
 
 
 CTmax<-CTmax %>% dplyr::mutate(Treatment_Name = case_when(
-  Treatment == 'Macrocystis' ~ 'High quality food',
-  Treatment == 'Saccharina' ~ 'Low quality food',
-  Treatment == 'Unfed' ~ 'No food')) # do same for GrazerWeights
+  Treatment == 'Macrocystis' ~ 'High quality macroalgae',
+  Treatment == 'Saccharina' ~ 'Low quality macroalgae',
+  Treatment == 'Unfed' ~ 'No macroalgae')) # do same for GrazerWeights
 
 
 plot5<- ggplot(data=CTmax,aes(x=Treatment_Name,y=LOE_sec,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species_Name,scale='free_y')+ggtitle("Heat resistance")+labs(y='Time to LOE (s)')+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'))+xlab("Treatment")+ theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position = "none")

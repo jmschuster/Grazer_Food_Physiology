@@ -1,13 +1,19 @@
 ---
 title: "Grazer physiology food experiment"
+author: "Jasmin M. Schuster"
 output: html_document
+date: "'r format(Sys.time(), '%d, %B, %Y')'"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# include = FALSE excludes code chunk & doesn't make it run
+# echo = FALSE excludes the code chunk but runs code & includes the results
+
 ```
 
-## R Markdown
+## Processing Respirometry data
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
@@ -66,7 +72,9 @@ D3Channel1 %>%  filter(Time>=0 & Time<807) %>%
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
-``` {r Plotting}
+### Plotting the data
+
+``` {r Plotting, echo = FALSE}
 setwd("/Users/jmschuster/Documents/GitHub/Grazer_Food_Physiology/")
 CageExp<-read.csv("BMSC_CageExp_Data.csv")
 GrazerWeights<-read.csv("Grazer_Weights.csv")
@@ -486,7 +494,7 @@ ggsave(filename="Cage_Temps",height=9, width=7, units="in", plot=grid.arrange(pC
 
 ```
 
-Statistical Analysis
+# Statistical Analyses
 ``` {r Stats, eval=FALSE}
 
 ###################################

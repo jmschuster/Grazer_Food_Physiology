@@ -1,12 +1,14 @@
 ---
 title: "Grazer physiology food experiment"
 author: "Jasmin M. Schuster"
-output: html_document
-date: "'r format(Sys.time(), '%d, %B, %Y')'"
+date: '''r format(Sys.time(), ''%d, %B, %Y'')'''
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
 
 # include = FALSE excludes code chunk & doesn't make it run
 # echo = FALSE excludes the code chunk but runs code & includes the results
@@ -24,7 +26,7 @@ library(respR) # load the library
 setwd("/Users/jmschuster/Desktop/PhD/Bamfield 2021/Data/Grazer_Food_Exp/Start_Day1/") # set wd
 
 D1Channel10<-read.csv("Channel10.csv") # background resp data
-D1Channel3<-read.csv("Channel3.csv") # selected channel resp data
+D1Channel1<-read.csv("Channel1.csv") # selected channel resp data
 
 D1Channel1 %>% filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%                 # With the data object,
   inspect(3, 7) %>%                                     # inspect, then
@@ -55,8 +57,10 @@ D1Channel1 %>%  filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%
   convert_rate(o2.unit = "%", time.unit = "m",     
                output.unit = "ml/h", volume = 0.57,S=30.8, t=D1Channel1$Temperature) # convert units.
 
+```
 
-
+In some cases, the Delta.T..min time stamps are incorrect/messy, so a new column "Time_new" or "Time" was added with time in seconds. The below chunk calculates MO2 for channels with messy time stamp.
+```{r Data processing, include=FALSE}
 #### MESSY TIME STAMPS (DAY 3 START)
 D3Channel1 %>%  filter(Time>=0 & Time<807) %>%            
   inspect(3, 8) %>%   
@@ -74,23 +78,21 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 ### Plotting the data
 
-``` {r Plotting, echo = FALSE}
+``` {r Map plot, echo = FALSE}
+# Load the data
 setwd("/Users/jmschuster/Documents/GitHub/Grazer_Food_Physiology/")
 CageExp<-read.csv("BMSC_CageExp_Data.csv")
 GrazerWeights<-read.csv("Grazer_Weights.csv")
 CTmax<-read.csv('CTmax_FoodExp.csv')
 
-########################################################
-##################### MAP FIGURE #######################
-########################################################
-library(ggplot2); library('sf'); library('rnaturalearth'); library('rnaturalearthdata')
+# Install libraries
+library(ggplot2); library('sf'); library('rnaturalearth'); library('rnaturalearthdata');library('rnaturalearthhires'); library(rgeos); library(ggspatial); library(ggrepel) 
 devtools::install_github("ropenscilabs/rnaturalearthdata")
 install.packages("rnaturalearthhires",
                  repos = "http://packages.ropensci.org",
-                 type = "source")
+                 type = "source") # if not installed yet
 
-library('rnaturalearthhires'); library(rgeos); library(ggspatial); library(ggrepel)
-
+# Basemap of Canada
 X=c('canada')
 world <- ne_states(country='canada',returnclass = 'sf')
 world_points<- st_centroid(world)
@@ -122,11 +124,10 @@ Locs<-tibble(Lat,Long,Site)
 
 
 
+```
 
-
-########################################################
-############ DIFFERENCES IN METABOLIC RATES ############
-########################################################
+## Metabolic rate plots
+``` {r Metabolic rates, echo=FALSE}
 
 # Tidying data
 CageExp$Week<-as.factor(CageExp$Week)
@@ -273,7 +274,11 @@ legend2 <- get_legend(plot3d) # extract legend object
 
 # SAVE FINAL PLOT
 ggsave(filename="MassIndep_MR_V2",height=9, width=9, units="in", plot=grid.arrange(plot3a, plot3b, plot3c, plot3d+theme(legend.position='none'),legend2, ncol = 2,nrow=3,  widths = c(2.2, 2), heights = c(2.6, 2.9,0.3)), device="png")
+```
 
+## Organism Mass
+Plotting organism wet, dry and ash-free dry mass across treatments and species
+``` {r Organism mass, echo = FALSE}
 ########################################################
 ############# DIFFERENCES IN ORGANISM MASS #############
 ########################################################
@@ -293,11 +298,13 @@ plot4c<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=AFD
 
 ggsave(filename="AFDW",height=4, width=5, units="in", plot=plot4c, device="png")
 
+````
 
-########################################################
-############ DIFFERENCES IN HEAT RESISTENCE ############
-########################################################
+## Heat Resistence 
+Initial exploration of time until LOE (loss of equilibrium) under heat stress in grazers
 
+
+``` {r Heat resistence, echo=FALSE}
 # Heat resistance initial plots
 CTmax$LOE_sec<-as.numeric(CTmax$LOE_sec)
 CTmax$Treatment<-as.factor(CTmax$Treatment)
@@ -355,7 +362,10 @@ ggsave(filename="HeatRes_Species",height=5, width=8, units="in", plot=plot8, dev
 
 
 
+```
 
+## Survival Analysis
+``` {r Survival Analysis}
 ###################################################
 ############## SURVIVAL ANALYSIS ##################
 ###################################################
@@ -420,15 +430,11 @@ ggsave(filename="HeatResistance_Species",height=6, width=8, units="in", plot=SPP
 
 # SAVE FINAL PLOT COMPOSITE
 ggsave(filename="HeatResistance_Composite",height=9, width=7, units="in", plot=grid.arrange(grid.arrange(plot_heat_Mfra,plot_heat_Spur, plot_heat_Pgib, plot_heat_Tpul+theme(legend.position='none'),legend, ncol = 2,nrow=3,  widths = c(2.2, 2), heights = c(2.6, 2.9,0.5)),SPP_Surv, ncol =1, nrow =2), device="png")
+```
 
-
-# Cox Proportional Hazard model (include all covariates):
-# Assumption that covariates do not vary with time is met by data
-cox_heat<- coxph(Surv(LOE_sec) ~ Treatment_Name * Species_Name, data=CTmax)
-summary(cox_heat)
-cox_fit <- survfit(cox_heat)
-autoplot(cox_fit) # see warning, this curve doesn't consider interactions i.e. not useful
-
+## Temperature data 
+In situ temperatures (EnvLoggers) from 3 cages suspended at ~5m depth for 7 weeks off the foreshore docks at the Bamfield Marine Science Centre, Bamfield, Vancouver Island.
+```{r Temperatures, echo=FALSE}
 
 ##################################
 ###### IN SITU (CAGE) TEMPS ######

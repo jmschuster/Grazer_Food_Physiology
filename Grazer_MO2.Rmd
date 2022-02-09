@@ -188,12 +188,13 @@ Mres1<-lme(MO2_ml.h~WetWeight_g,random=~1|Species,data=CageExp,na.action=na.omit
 Mres1a<-lme(MO2_ml.h~WetWeight_g,random=~1+WetWeight_g|Species,data=CageExp,na.action=na.omit) # random slope + intercept
 Mres2<-gamm(MO2_ml.h~s(WetWeight_g),random=list(Species=~1),data=CageExp,na.action=na.omit)
 res.VO2.WW=as.data.frame(residuals(Mres1));colnames(res.VO2.WW)=c("res.VO2.WW")
+res1.VO2.WW=as.data.frame(residuals(Mres1a));colnames(res1.VO2.WW)=c("res1.VO2.WW")
 res2.VO2.WW<-as.data.frame(residuals(Mres2$gam,type='response'));colnames(res2.VO2.WW)=c('res2.VO2.WW') # response residuals (= observed - fitted values)
 CageExpSub<-CageExp[!is.na(CageExp$MO2_ml.h),] # remove rows with missing MO2 values
 CageExpSub=cbind(CageExpSub,res.VO2.WW,res1.VO2.WW,res2.VO2.WW) # bind residuals to df
 
 # Plot Mass-independent MO2
-# Function to round so that y-axis labels can be shown with 2 decimal points
+# Function to round values so that y-axis labels can be shown with 2 decimal points
 formatter <- function(...){
   function(x) format(round(x, 2), ...)
 }
@@ -232,7 +233,7 @@ CageExpSub <- CageExpSub %>% mutate(Signif = case_when(
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Unfed' ~ 'Yes',
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Saccharina' ~ 'No',
   Species=='Strongylocentrotus purpuratus' & Week=='Week 7' & Treatment=='Macrocystis' ~ 'No',
-  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Unfed' ~ 'Yes',
+  Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Unfed' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Saccharina' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 2' & Treatment=='Macrocystis' ~ 'No',
   Species=='Pomaulax gibberosus' & Week=='Week 7' & Treatment=='Unfed' ~ 'No',
@@ -261,7 +262,7 @@ plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.6))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.2))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
 
 ###
 
@@ -592,7 +593,7 @@ shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
 library(outliers)
 # Week 2
 grubbs.test(Pgib$res2.VO2.WW) # outlier test
-Pgib<-Pgib %>% filter(res2.VO2.WW<1.1 & res2.VO2.WW >-0.9) # remove 5 outliers
+Pgib<-Pgib %>% filter(res2.VO2.WW<0.2 & res2.VO2.WW >-0.55) # remove 14 outliers
 
 # Week 7
 grubbs.test(Pgib7$res2.VO2.WW) # outlier test; repeat after removing each outlier IDd (one at a time)

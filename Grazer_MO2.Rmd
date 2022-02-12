@@ -60,7 +60,7 @@ D1Channel1 %>%  filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%
 ```
 
 In some cases, the Delta.T..min time stamps are incorrect/messy, so a new column "Time_new" or "Time" was added with time in seconds. The below chunk calculates MO2 for channels with messy time stamp.
-```{r Data processing, include=FALSE}
+```{r Data processing 2, include=FALSE}
 #### MESSY TIME STAMPS (DAY 3 START)
 D3Channel1 %>%  filter(Time>=0 & Time<807) %>%            
   inspect(3, 8) %>%   
@@ -142,6 +142,11 @@ CageExp<-CageExp %>% dplyr::mutate(Treatment_Name = case_when(
   Treatment == 'Saccharina' ~ 'Low quality macroalgae',
   Treatment == 'Unfed' ~ 'No macroalgae'))
 
+GrazerWeights<-GrazerWeights %>% dplyr::mutate(Treatment_Name = case_when(
+  Treatment == 'Macrocystis' ~ 'High quality macroalgae',
+  Treatment == 'Saccharina' ~ 'Low quality macroalgae',
+  Treatment == 'Unfed' ~ 'No macroalgae'))
+
 # Rescale with outliers removed
 filter_lims <- function(x){
   l <- boxplot.stats(x)$stats[1]
@@ -168,15 +173,15 @@ plot1<-CageExp %>% filter(rsqrt>=0.9) %>%
 
 # Absolute MO2
 plot2<-CageExpSub %>% filter(rsqrt>=0.9) %>%
-  group_by(Species, Treatment) %>%  # do the same calcs for each box
+  group_by(Species, Treatment_Name) %>%  # do the same calcs for each box
   dplyr::mutate(value2 = filter_lims(MO2_ml.h)) %>%  # new variable (value2) so as not to displace first one)
-  ggplot(aes(x=Week, y=value2, fill = Treatment)) + 
+  ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
   geom_boxplot(na.rm = TRUE, coef = 5) + 
   facet_wrap( ~ Species, scales="free") + 
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*'')) + ggtitle("Absolute")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'))+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*'')) + ggtitle("Absolute")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="Treatment")+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
 
-ggsave(filename="Absolute_MR",height=6, width=7, units="in", plot=plot2, device="png")
-ggsave(filename="WetMass_MR",height=6, width=7, units="in", plot=plot1, device="png")
+ggsave(filename="Absolute_MR",height=7, width=8, units="in", plot=plot2, device="png")
+ggsave(filename="WetMass_MR",height=7, width=8, units="in", plot=plot1, device="png")
 
 # Mass-independent MO2
 # Relationship between mass & MO2
@@ -287,17 +292,17 @@ Plotting organism wet, dry and ash-free dry mass across treatments and species
 # Wet Mass
 plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Wet Mass")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
 
-ggsave(filename="WetWeights",height=4, width=5, units="in", plot=plot4a, device="png")
+ggsave(filename="WetWeights",height=4, width=5.5, units="in", plot=plot4a, device="png")
 
 # Dry Mass
 plot4b<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=DryWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Dry Mass")+labs(y="Dry Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
 
-ggsave(filename="DryWeights",height=4, width=5, units="in", plot=plot4b, device="png")
+ggsave(filename="DryWeights",height=4, width=5.5, units="in", plot=plot4b, device="png")
 
 # AFD Mass
 plot4c<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=AFDW_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species,scale='free_y')+ggtitle("AFDM")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
 
-ggsave(filename="AFDW",height=4, width=5, units="in", plot=plot4c, device="png")
+ggsave(filename="AFDW",height=4, width=5.5, units="in", plot=plot4c, device="png")
 
 ````
 
@@ -528,17 +533,23 @@ shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
 library(outliers)
 # Week 2
 grubbs.test(Mfra$res2.VO2.WW) # outlier test
-Mfra<-Mfra %>% filter(res2.VO2.WW<4) # remove 2 outliers (row 16 and 37 of full Mfra df)
+Mfra<-Mfra %>% filter(res2.VO2.WW<0.6 & res2.VO2.WW >-0.6) # remove 2 outliers (row 16 and 37 of full Mfra df)
 # Week 7
 grubbs.test(Mfra7$res2.VO2.WW) # outlier test
 grubbs.test(Mfra7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
-Mfra7<-Mfra7 %>% filter(res2.VO2.WW<1 & res2.VO2.WW >-0.8) # remove 2 outliers 
+Mfra7<-Mfra7 %>% filter(res2.VO2.WW<1 & res2.VO2.WW >-0.44) # remove 2 outliers 
 
-# Non-parametric test of treatment differences
+# Non-parametric test of treatment differences in Week 2
 kruskal.test(res2.VO2.WW ~ Treatment, data = Mfra) # KW test for multiple treatment levels
 
 # Test which treatment levels are different:
 wilcox_test(res2.VO2.WW ~ Treatment, data = Mfra, p.adjust.method = "bonferroni")
+
+# Parametric test of treatment differences in Week 7
+summary(Mfra_W7)
+TukeyHSD(Mfra_W7, which = "Treatment")
+
+Mfra_all<-rbind(Mfra,Mfra7) # making df for red urchin without outliers (for sensitivity analysis below)
 
 ########## STRONGYLOCENTROTUS PURPURATUS
 # Subset for species, remove measurements with r squared <0.90, separate df for each week
@@ -608,6 +619,8 @@ kruskal.test(res2.VO2.WW ~ Treatment, data = Pgib7) # KW test for multiple treat
 
 # Test which treatment levels are different; Week 7
 wilcox_test(res2.VO2.WW ~ Treatment, data = Pgib7, p.adjust.method = "bonferroni")
+
+Pgib_all<-rbind(Pgib,Pgib7) # make Pgib df with outliers removed (for sensitivity analysis below)
 
 ####### TEGULA PULLIGO
 # Subset for species, remove measurements with r squared <0.90, separate df for each week
@@ -802,13 +815,25 @@ kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='
 
 
 # Stats for mass-independent MO2 of subset:
-# Non-parametric test of treatment differences
-kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # KW test for multiple treatment levels
+Mfra_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # Week 2
+Mfra_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<70)) # Week 2
 
-# WEEK 2 and WEEK 7 significantly different with subset <70g wet mass in red sea urchins
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Mfra_Sub)
+shapiro.test(x = aov_residuals ) # p < 0.05, normality is violated
+
+# Week 2 subset violates normality; Week 7 subset does not
+summary(Mfra_Sub)
+
+# Non-parametric test of treatment differences Week 2
+kruskal.test(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,Common_Name=='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # KW test for multiple treatment levels; WEEK 2
 
 # Test which treatment levels are different:
-wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70),p.adjust.method = "bonferroni")
+wilcox_test(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,Common_Name =='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70),p.adjust.method = "bonferroni") # WEEK 2
+# WEEK 2 not significantly different with subset <70g wet mass in red sea urchins
+
+# Test which treatment levels are different Week 7 (parametric)
+TukeyHSD(Mfra_Sub, which = "Treatment")
 
 ##########################################
 #### SENSITIVITY TEST RED TURBAN SNAIL ####
@@ -817,7 +842,7 @@ pS2<-CageExpSub %>% filter(rsqrt>=0.9 & Species=='Pomaulax gibberosus' & WetWeig
   dplyr::mutate(value2 = filter_lims(res2.VO2.WW)) %>%  # new variable (value2) so as not to displace first one)
   ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
   geom_boxplot(na.rm = TRUE, coef = 5) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+theme_bw(base_size=15)+theme(plot.title = element_text(face='italic'),legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+stat_summary(fun.data= give.n, geom = "text", fun = median, position = position_dodge(width = 0.75),vjust=-9,size=4)+ggtitle("Pomaulax gibberosus")+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.35,0.3))
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment')+theme_bw(base_size=15)+theme(plot.title = element_text(face='italic'),legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank())+stat_summary(fun.data= give.n, geom = "text", fun = median, position = position_dodge(width = 0.75),vjust=-6,size=4)+ggtitle("Pomaulax gibberosus")+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.35,0.3))
 
 # When removing largest turban snails, how many individuals per treatment?
 CageExpSub %>% filter(rsqrt>=0.9 & Species=='Pomaulax gibberosus' & WetWeight_g<40) %>% group_by(Treatment_Name,Week) %>% tally()
@@ -831,13 +856,30 @@ pS4<-ggplot(data=subset(GrazerWeights,Week=='Week 0' & Species=='Pomaulax gibber
 kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='Red turban snail' & Week=='Week 0' & WetWeight_g<40)) # NO MASS DIFFERENCES ACROSS TREATMENTS HERE
 
 # Stats for mass-independent MO2 of subset:
-# Non-parametric test of treatment differences
-kruskal.test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name=='Red turban snail' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40)) # KW test for multiple treatment levels
+Pgib_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40)) # Week 2
+Pgib_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<40)) # Week 7
 
-# WEEK 2 and WEEK 7 significantly different with subset <70g wet mass in red sea urchins
+# Shapiro-Wilko test for normality
+aov_residuals <- residuals(object = Pgib_Sub)
+shapiro.test(x = aov_residuals ) # p < 0.05, normality is violated
+
+# Week 7 subset violates normality; Week 2 subset does not
+
+# Parametric test of treatment diff (Week 2)
+summary(Pgib_Sub)
+TukeyHSD(Pgib_Sub,which='Treatment')
+
+# WEEK 2 no difference in MO2 with treatment in red turban snail
+
+# Non-parametric test of treatment differences (Week 7)
+kruskal.test(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,Common_Name=='Red turban snail' & rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<40)) # KW test for multiple treatment levels
+
+# WEEK 7 significantly different MO2 across treatments in red turban snails
 
 # Test which treatment levels are different:
-wilcox_test(res2.VO2.WW ~ Treatment, data = subset(CageExpSub,Common_Name =='Red turban snail' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40),p.adjust.method = "bonferroni")
+wilcox_test(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,Common_Name =='Red turban snail' & rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<40),p.adjust.method = "bonferroni")
+
+# Unfed is different from both food treatments in red turban subset
 
 ### PLOTS FOR SENSITIVITY TEST
 # MO2 

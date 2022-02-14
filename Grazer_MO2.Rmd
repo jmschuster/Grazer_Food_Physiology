@@ -626,7 +626,7 @@ Pgib_all<-rbind(Pgib,Pgib7) # make Pgib df with outliers removed (for sensitivit
 # Subset for species, remove measurements with r squared <0.90, separate df for each week
 Tpul<-CageExpSub %>% filter(Common_Name=='Dusky turban snail' & rsqrt>=0.90 & Week=='Week 2')
 Tpul7<-CageExpSub %>% filter(Common_Name=='Dusky turban snail' & rsqrt>=0.90 & Week=='Week 7')
-Tpul$res2.VO2.WW.Ind<-(Tpul$res2.VO2.WW/Tpul$N_Dusky)
+Tpul$res2.VO2.WW.Ind<-(Tpul$res2.VO2.WW/Tpul$N_Dusky) # calc individual avrg MO2 (as multiple duskys per chamber)
 Tpul7$res2.VO2.WW.Ind<-(Tpul7$res2.VO2.WW/Tpul7$N_Dusky) # calc individual avrg MO2 (as multiple duskys per chamber)
 
 Tpul_W2<-aov(res2.VO2.WW.Ind ~ Treatment, data = Tpul) # Week 2
@@ -639,17 +639,20 @@ plot(Tpul_W2, which = 2)  # qqnorm plot
 aov_residuals <- residuals(object = Tpul_W2)
 shapiro.test(x = aov_residuals ) # if p < 0.05; normality is violated
 
+# WEEK 7 MEETS NORMALITY ASSUMPTIONS; NO OUTLIERS
+
 # Check for outliers where normality test failed
 library(outliers)
 # Week 2
 grubbs.test(Tpul$res2.VO2.WW.Ind) # outlier test
 Tpul<-Tpul %>% filter(res2.VO2.WW.Ind<0.2) # remove 2 outliers (row 16 and 37 of full Tpul df)
 
-# Non-parametric test of treatment differences
-kruskal.test(res2.VO2.WW.Ind ~ Treatment, data = Tpul) # KW test for multiple treatment levels
+# Parametric test for Week 2 & Week 7
+summary(Tpul_W2)
+TukeyHSD(Tpul_W2, which = "Treatment")
 
-# Test which treatment levels are different:
-wilcox_test(res2.VO2.WW.Ind ~ Treatment, data = Tpul, p.adjust.method = "bonferroni")
+summary(Tpul_W7)
+TukeyHSD(Tpul_W7, which = "Treatment")
 
 
 

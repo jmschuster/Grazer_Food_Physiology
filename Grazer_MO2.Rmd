@@ -109,7 +109,7 @@ VI_map<-ggplot(data = world) +
                          pad_x = unit(0.2, "in"), pad_y = unit(0.3, "in"),
                          style = north_arrow_fancy_orienteering)
 
-ggsave(filename="Map_VancouverIsland",height=5, width=6, units="in", plot=VI_map, device="png")
+# ggsave(filename="Map_VancouverIsland",height=5, width=6, units="in", plot=VI_map, device="png")
 
 # Location of BMSC in Bamfield
 Lat<-c(48.833778)
@@ -459,8 +459,15 @@ Cage1Temp$Time <- format(as.POSIXct(Cage1Temp$date_time),format= "%H:%M:%S") # c
 ### Plot temperature time-series (from 25th March to 15th May 2021)
 # First, remove dates before & after caging period, and days where cages were out of the water (during MR assays), where temps reflect air temp not in situ seawater temp.
 
+# Cage 1; remove temp recordings when cage was in air (overnight during experiment)
+Cage1Temp$InAir <- NA #initialise
+Cage1Temp$InAir[925:971] <- "Air"
+Cage1Temp$InAir[2620:2666] <- "Air"
+Cage1Temp$InAir[is.na(Cage1Temp$InAir)] <- "Water"
+Cage1Temp$InAir<-as.factor(Cage1Temp$InAir)
+
 # Cage 1
-plot_Cage1T<-Cage1Temp %>% filter(Date!='2021-04-08' & Date!='2021-05-13' & Date!='2021-05-14' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 1",tag="A")+annotate('text',x=as.Date("2021-04-09"),y=13.5,label="Week 2",colour='darkgrey')+coord_cartesian(ylim=c(8,13),clip="off")+annotate('text',x=as.Date("2021-05-14"),y=13.5,label="Week 7",colour='darkgrey')
+plot_Cage1T<-Cage1Temp %>% filter(InAir!='Air' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 1",tag="A")+annotate('text',x=as.Date("2021-04-09"),y=13.5,label="Week 2",colour='darkgrey')+coord_cartesian(ylim=c(8,13),clip="off")+annotate('text',x=as.Date("2021-05-14"),y=13.5,label="Week 7",colour='darkgrey')
 
 #
 pC1<-plot_Cage1T + annotate("rect",
@@ -470,7 +477,14 @@ pC1<-plot_Cage1T + annotate("rect",
     ymin = -Inf, ymax = Inf,  fill = "lightgrey", alpha=.3)
 
 # Cage # 4
-plot_Cage4T<-Cage4Temp %>% filter(Date!='2021-04-08' & Date!='2021-05-13' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 4",tag="B")
+# Cage 4; remove temp recordings when cage was in air (overnight during experiment)
+Cage4Temp$InAir <- NA #initialise
+Cage4Temp$InAir[925:963] <- "Air"
+Cage4Temp$InAir[2620:2635] <- "Air"
+Cage4Temp$InAir[is.na(Cage4Temp$InAir)] <- "Water"
+Cage4Temp$InAir<-as.factor(Cage4Temp$InAir)
+
+plot_Cage4T<-Cage4Temp %>% filter(InAir!='Air' & Date > '2021-03-24' & Date<'2021-05-16') %>% ggplot(aes(x=Date,y=Temp_C)) + geom_point(colour='darkcyan',alpha=0.5)+ theme_bw()+ theme(panel.grid = element_blank(),text=element_text(size=12),axis.title.x = element_blank(),axis.text.x=element_blank())+ ylab('Temperature (°C)') + xlab('Date (Month-Day)')+ scale_x_date(date_breaks = "1 week",date_labels = "%b %d",limits=c(min=as.Date("2021-03-25"),max=as.Date("2021-05-16")))+labs(title="Cage # 4",tag="B")
 
 pC4<-plot_Cage4T + annotate("rect",
     xmin = as.Date("2021-04-08"), xmax = as.Date("2021-04-10"), 

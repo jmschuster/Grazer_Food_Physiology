@@ -22,7 +22,7 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r Data processing, eval = FALSE}
-library(respR) # load the library
+library(respR); library(dplyr) # load the library
 setwd("/Users/jmschuster/Desktop/PhD/Bamfield 2021/Data/Grazer_Food_Exp/Start_Day1/") # set wd
 
 D1Channel10<-read.csv("Channel10.csv") # background resp data
@@ -60,17 +60,17 @@ D1Channel1 %>%  filter(Delta.T..min.>=0 & Delta.T..min.<33) %>%
 ```
 
 In some cases, the Delta.T..min time stamps are incorrect/messy, so a new column "Time_new" or "Time" was added with time in seconds. The below chunk calculates MO2 for channels with messy time stamp.
-```{r Data processing 2, include=FALSE}
+```{r Data processing 2, include=FALSE,echo=FALSE}
 #### MESSY TIME STAMPS (DAY 3 START)
-D3Channel1 %>%  filter(Time>=0 & Time<807) %>%            
-  inspect(3, 8) %>%   
-  calc_rate(from = 0, to = 807, by = "time") %>% 
-  print() %>%
-  adjust_rate(
-    calc_rate.bg(D1Channel10,time=3,oxygen=7)) %>%
-  print() %>%
-  convert_rate(o2.unit = "%", time.unit = "s",     
-               output.unit = "ml/h", volume = 0.6,S=30.8, t=D3Channel1$Temperature) # convert units.
+#D3Channel1 %>%  filter(Time>=0 & Time<807) %>%            
+#  inspect(3, 8) %>%   
+#  calc_rate(from = 0, to = 807, by = "time") %>% 
+#  print() %>%
+#  adjust_rate(
+#    calc_rate.bg(D1Channel10,time=3,oxygen=7)) %>%
+#  print() %>%
+#  convert_rate(o2.unit = "%", time.unit = "s",     
+#               output.unit = "ml/h", volume = 0.6,S=30.8, t=D3Channel1$Temperature) # convert units.
 
 ```
 
@@ -87,11 +87,6 @@ CTmax<-read.csv('CTmax_FoodExp.csv')
 
 # Install libraries
 library(ggplot2); library('sf'); library('rnaturalearth'); library('rnaturalearthdata');library('rnaturalearthhires'); library(rgeos); library(ggspatial); library(ggrepel) 
-devtools::install_github("ropenscilabs/rnaturalearthdata")
-install.packages("rnaturalearthhires",
-                 repos = "http://packages.ropensci.org",
-                 type = "source") # if not installed yet
-
 # Basemap of Canada
 X=c('canada')
 world <- ne_states(country='canada',returnclass = 'sf')

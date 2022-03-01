@@ -246,7 +246,7 @@ plot3a<-CageExpSub %>% filter(rsqrt>=0.90 & Species=='Mesocentrotus franciscanus
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif)) +
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1)+ 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgrey'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.4))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title.x=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Mesocentrotus franciscanus",tag="A")+ annotate(geom="text", x=1, y=0.23, label="N = 98",color="black",size=5)+annotate(geom="text", x=2, y=0.38, label="N = 102",color="black",size=5) 
 
 ###
 
@@ -254,7 +254,8 @@ plot3b<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Strongylocentrotus purpur
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+labs(title="Strongylocentrotus purpuratus",tag="B")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+scale_fill_manual(values=c('white','gray90'),name='Treatment')+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.8,0.8))+theme_bw(base_size=15)+theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(),panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5),axis.title=element_blank(), panel.grid.minor = element_blank(),plot.title = element_text(face = "italic"))+ labs(title="Strongylocentrotus purpuratus",tag="B") + annotate(geom="text", x=1, y=0.7, label="N = 102",color="black",size=5)+annotate(geom="text", x=2, y=0.75, label="N = 105",color="black",size=5)
+
 
 ###
 
@@ -262,14 +263,16 @@ plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW, colour = Treatment_Name,fill=Signif))+
   geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.2))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_fill_manual(values=c('white','gray90'),name='Treatment') +scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2),limits=c(-0.5,0.2))+theme_bw(base_size=15)+ theme(legend.position='none',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), plot.title = element_text(face = "italic"))+labs(title="Pomaulax gibberosus",tag="C")+ annotate(geom="text", x=1, y=0.08, label="N = 95",color="black",size=5)+annotate(geom="text", x=2, y=0.15, label="N = 103",color="black",size=5)
 
 ###
 
 plot3d<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW/N_Dusky, colour = Treatment_Name))+ geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment')+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")+ annotate(geom="text", x=1, y=0.02, label="N = 87",
+              color="black",size=5)+ annotate(geom="text", x=2, y=0.02, label="N = 75",
+              color="black",size=5)
 
 legend2 <- get_legend(plot3d) # extract legend object
 

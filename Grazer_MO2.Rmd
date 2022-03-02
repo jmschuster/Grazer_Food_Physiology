@@ -164,7 +164,7 @@ plot1<-CageExp %>% filter(rsqrt>=0.9) %>%
   ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
   geom_boxplot(na.rm = TRUE, coef = 5) + 
   facet_wrap( ~ Species, scales="free") + 
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h / g)*'')) + ggtitle("Wet Mass")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment') +theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h / g)*'')) + scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='Treatment') +theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
 
 # Absolute MO2
 plot2<-CageExpSub %>% filter(rsqrt>=0.9) %>%
@@ -173,7 +173,7 @@ plot2<-CageExpSub %>% filter(rsqrt>=0.9) %>%
   ggplot(aes(x=Week, y=value2, fill = Treatment_Name)) + 
   geom_boxplot(na.rm = TRUE, coef = 5) + 
   facet_wrap( ~ Species, scales="free") + 
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*'')) + ggtitle("Absolute")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="Treatment")+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="Treatment")+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
 
 ggsave(filename="Absolute_MR",height=7, width=8, units="in", plot=plot2, device="png")
 ggsave(filename="WetMass_MR",height=7, width=8, units="in", plot=plot1, device="png")
@@ -288,17 +288,17 @@ Plotting organism wet, dry and ash-free dry mass across treatments and species
 ########################################################
 
 # Wet Mass
-plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Wet Mass")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
 
 ggsave(filename="WetWeights",height=4, width=5.5, units="in", plot=plot4a, device="png")
 
 # Dry Mass
-plot4b<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=DryWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+ggtitle("Dry Mass")+labs(y="Dry Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+plot4b<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=DryWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+labs(y="Dry Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position='bottom',legend.margin=margin(t=-10),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))+scale_y_continuous(labels = formatter(nsmall = 1))
 
 ggsave(filename="DryWeights",height=4, width=5.5, units="in", plot=plot4b, device="png")
 
 # AFD Mass
-plot4c<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=AFDW_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species,scale='free_y')+ggtitle("AFDM")+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+plot4c<-ggplot(data=subset(GrazerWeights,Time_WetWeight=='End'),aes(x=Week,y=AFDW_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw(base_size=15)+facet_wrap(~Species,scale='free_y')+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name='')+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))+scale_y_continuous(labels = formatter(nsmall = 1))
 
 ggsave(filename="AFDW",height=4, width=5.5, units="in", plot=plot4c, device="png")
 

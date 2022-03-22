@@ -589,6 +589,7 @@ grubbs.test(Spur7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
 Spur7<-Spur7 %>% filter(res2.VO2.WW<2 & res2.VO2.WW >-1.6) # remove 2 outliers 
 
 # Tukeys post hoc for Week 2 (Week 2 Spur data meets assumptions after outlier is removed)
+summary(Spur_W2)
 TukeyHSD(Spur_W2, which = "Treatment")
 
 # Non-parametric test of treatment differences Week 7
@@ -624,6 +625,7 @@ grubbs.test(Pgib7$res2.VO2.WW, opposite=TRUE) # outlier test (lowest)
 Pgib7<-Pgib7 %>% filter(res2.VO2.WW<0.4 & res2.VO2.WW>-0.7) # remove 5 outliers 
 
 # Tukeys post hoc for Week 2 (Week 2 Pgib data meets assumptions after outliers are removed)
+summary(Pgib_W2)
 TukeyHSD(Pgib_W2, which = "Treatment")
 
 # Non-parametric test of treatment differences; Week 7
@@ -658,6 +660,7 @@ library(outliers)
 # Week 2
 grubbs.test(Tpul$res2.VO2.WW.Ind) # outlier test
 Tpul<-Tpul %>% filter(res2.VO2.WW.Ind<0.2) # remove 2 outliers (row 16 and 37 of full Tpul df)
+# Week 7 no outliers
 
 # Parametric test for Week 2 & Week 7
 summary(Tpul_W2)

@@ -833,14 +833,14 @@ kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='
 
 # Stats for mass-independent MO2 of subset:
 Mfra_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # Week 2
-Mfra_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<70)) # Week 2
+Mfra_Sub7<-aov(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<70)) # Week 2
 
 # Shapiro-Wilko test for normality
 aov_residuals <- residuals(object = Mfra_Sub)
 shapiro.test(x = aov_residuals ) # p < 0.05, normality is violated
 
 # Week 2 subset violates normality; Week 7 subset does not
-summary(Mfra_Sub)
+summary(Mfra_Sub7)
 
 # Non-parametric test of treatment differences Week 2
 kruskal.test(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,Common_Name=='Red sea urchin' & rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<70)) # KW test for multiple treatment levels; WEEK 2
@@ -850,7 +850,7 @@ wilcox_test(res2.VO2.WW ~ Treatment, data = subset(Mfra_all,Common_Name =='Red s
 # WEEK 2 not significantly different with subset <70g wet mass in red sea urchins
 
 # Test which treatment levels are different Week 7 (parametric)
-TukeyHSD(Mfra_Sub, which = "Treatment")
+TukeyHSD(Mfra_Sub7, which = "Treatment")
 
 ##########################################
 #### SENSITIVITY TEST RED TURBAN SNAIL ####
@@ -872,7 +872,7 @@ kruskal.test(WetWeight_g ~ Treatment, data = subset(GrazerWeights,Common_Name=='
 
 # Stats for mass-independent MO2 of subset:
 Pgib_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,rsqrt>=0.9 & Week=='Week 2' & WetWeight_g<40)) # Week 2
-Pgib_Sub<-aov(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<40)) # Week 7
+Pgib_Sub7<-aov(res2.VO2.WW ~ Treatment, data = subset(Pgib_all,rsqrt>=0.9 & Week=='Week 7' & WetWeight_g<40)) # Week 7
 
 # Shapiro-Wilko test for normality
 aov_residuals <- residuals(object = Pgib_Sub)

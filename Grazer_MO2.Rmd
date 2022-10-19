@@ -123,6 +123,8 @@ Locs<-tibble(Lat,Long,Site)
 
 ## Metabolic rate plots
 ``` {r Metabolic rates, echo=FALSE}
+library(dplyr)
+library(ggplot2)
 
 # Tidying data
 CageExp$Week<-as.factor(CageExp$Week)
@@ -154,8 +156,7 @@ filter_lims <- function(x){
 }
 
 
-library(dplyr)
-library(ggplot2)
+
 
 # Wet Weight specific MR (scale adjusted w/o outliers)
 plot1<-CageExp %>% filter(rsqrt>=0.9) %>%

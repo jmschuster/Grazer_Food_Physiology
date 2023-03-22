@@ -134,14 +134,14 @@ CageExp$Treatment<-as.factor(CageExp$Treatment)
 CageExp$Species<-factor(CageExp$Species,levels=c("Mesocentrotus franciscanus","Strongylocentrotus purpuratus","Pomaulax gibberosus", "Tegula pulligo")) # specify order of species name factor
 
 
-CageExp<-CageExp %>% dplyr::mutate(Treatment_Name = case_when(
+GrazerWeights<-GrazerWeights %>% dplyr::mutate(Treatment_Name = case_when(
   Treatment == 'Macrocystis' ~ 'High quality macroalgae',
   Treatment == 'Saccharina' ~ 'Low quality macroalgae',
   Treatment == 'Unfed' ~ 'No macroalgae'))
 
 GrazerWeights<-GrazerWeights %>% dplyr::mutate(Treatment_Name = case_when(
-  Treatment == 'Macrocystis' ~ 'High quality macroalgae',
-  Treatment == 'Saccharina' ~ 'Low quality macroalgae',
+  Treatment == 'Macrocystis' ~ 'Macrocystis pyrifera',
+  Treatment == 'Saccharina' ~ 'Saccharina latissima',
   Treatment == 'Unfed' ~ 'No macroalgae'))
 
 # Rescale with outliers removed
@@ -175,6 +175,8 @@ plot2<-CageExpSub %>% filter(rsqrt>=0.9) %>%
   geom_boxplot(na.rm = TRUE, coef = 5) + 
   facet_wrap( ~ Species, scales="free") + 
   xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(mL~O[2] / h)*''))+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="Treatment")+theme_bw(base_size=15)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"),legend.position='bottom',legend.margin=margin(t=-10))+scale_y_continuous(labels = formatter(nsmall = 2))
+
+
 
 ggsave(filename="Absolute_MR",height=7, width=8, units="in", plot=plot2, device="png")
 ggsave(filename="WetMass_MR",height=7, width=8, units="in", plot=plot1, device="png")
@@ -271,7 +273,7 @@ plot3c<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Pomaulax gibberosus') %>%
 plot3d<-CageExpSub %>% filter(rsqrt>=0.90  & Species=='Tegula pulligo') %>%
   ggplot(aes(x=Week, y=res2.VO2.WW/N_Dusky, colour = Treatment_Name))+ geom_hline(yintercept=0,colour='black',linetype="dashed",size=1) + 
   geom_boxplot(outlier.shape=NA,lwd=1) +  # remove NAs
-  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment',labels=c("Higher quality macroalgae", "Lower quality macroalgae", "No macroalgae"))+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")+ annotate(geom="text", x=1, y=0.02, label="N = 87",
+  xlab("Measurement time") +labs(y=bquote(' .\nM'*O[2]*~(standardized)*''))+ scale_colour_manual(values=c("seagreen", "yellow4",'darkgray'),name='Treatment',labels = c(expression(italic("Macrocystis pyrifera")), expression(italic("Saccharina latissima")),"No macroalgae"))+ scale_y_continuous(labels = formatter(nsmall = 2), limits=c(-0.04,0.02))+theme_bw(base_size=15)+ theme(panel.grid.major = element_blank(), axis.title.y=element_blank(), panel.grid.minor = element_blank(), panel.border=element_blank(), axis.line= element_line(colour = "black",size=0.5), legend.position=c(0.7,0.5), legend.direction = 'horizontal', legend.margin=margin(t=-10,l=150,b=-10), plot.title = element_text(face = "italic"))+labs(title="Tegula pulligo",tag="D")+ annotate(geom="text", x=1, y=0.02, label="N = 87",
               color="black",size=5)+ annotate(geom="text", x=2, y=0.02, label="N = 75",
               color="black",size=5)
 
@@ -350,7 +352,7 @@ Plotting organism wet, dry and ash-free dry mass across treatments and species
 ########################################################
 
 # Wet Mass
-plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="")+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
+plot4a<-ggplot(data=GrazerWeights,aes(x=Week,y=WetWeight_g,fill=Treatment_Name))+geom_boxplot(outlier.shape=NA)+theme_bw()+facet_wrap(~Species,scale='free_y')+labs(y="Mass (g)")+ scale_fill_manual(values=c("seagreen", "yellow4",'seashell3'),name="",labels = c(expression(italic("Macrocystis pyrifera")), expression(italic("Saccharina latissima")),"No macroalgae"))+xlab("Measurement time")+theme(legend.position='bottom',legend.margin=margin(t=-10),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),text=element_text(size=12),strip.text = element_text(face = "italic",colour='white'),strip.background=element_rect(fill="black"))
 
 ggsave(filename="WetWeights",height=4, width=5.5, units="in", plot=plot4a, device="png")
 
